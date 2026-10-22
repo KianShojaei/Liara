@@ -1,0 +1,24 @@
+diff --git a/src/handlers/shop.js b/src/handlers/shop.js
+--- a/src/handlers/shop.js
++++ b/src/handlers/shop.js
+@@ -6,8 +6,9 @@ const PRODUCTS = [
+   { id: 3, name: 'هدست گیمینگ', price: 1_990_000 },
+ ];
+ 
+-// "Response cache" that never evicts: the memory leak used by the demo (FAULT_MODE=leak).
++// Bounded response cache: keeps at most MAX_CACHE_ENTRIES recent entries.
+ const responseCache = [];
++const MAX_CACHE_ENTRIES = 100;
+ 
+ function faultMode() {
+   return (process.env.FAULT_MODE || 'none').toLowerCase();
+@@ -15,8 +16,8 @@ function faultMode() {
+ 
+ function productsHandler(req, res) {
+   if (faultMode() === 'leak') {
+-    // Every request keeps ~1MB alive forever.
+     responseCache.push({ at: Date.now(), body: Buffer.alloc(1024 * 1024, 1), query: req.query });
++    if (responseCache.length > MAX_CACHE_ENTRIES) responseCache.splice(0, responseCache.length - MAX_CACHE_ENTRIES);
+     if (responseCache.length % 50 === 0) console.warn(`[warn] cache size growing: entries=${responseCache.length}`);
+   }
+   res.json({ products: PRODUCTS, cached: responseCache.length });

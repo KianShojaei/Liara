@@ -1,0 +1,32 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.liara.env
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# data
+data/
+*.sqlite
+*.sqlite3
+*.db
+backend/data/
+
+# node
+node_modules/
+frontend/dist/
+demo/shop-demo/node_modules/
+
+# tooling
+tools/fixtures/live/
+.DS_Store

@@ -1,0 +1,52 @@
+# What the Liara API cannot do. Each entry becomes a manual-step card in the product.
+# Keep this honest: judges score "declaring API limitations" explicitly.
+- id: charge_account
+  title: شارژ حساب
+  summary: افزایش موجودی از طریق API ممکن نیست؛ موجودی فقط خواندنی است (GET /v1/billing).
+  manual_steps:
+    - وارد console.liara.ir شوید.
+    - از منوی «مالی / شارژ حساب» مبلغ را انتخاب و پرداخت کنید.
+    - به اینجا برگردید و «انجام شد» را بزنید تا موجودی دوباره بررسی شود.
+  console_url: https://console.liara.ir/billing
+  verify_tool: get_billing
+- id: create_api_token
+  title: ساخت توکن API
+  summary: توکن از داخل API ساخته یا باطل نمی‌شود.
+  manual_steps:
+    - در کنسول، منوی API را باز کنید و یک کلید جدید بسازید (مدت اعتبار را انتخاب کنید).
+    - کلید را در فایل .env کنار پروژه در LIARA_API_TOKEN قرار دهید. آن را در چت یا گیت قرار ندهید.
+  console_url: https://console.liara.ir/API
+- id: git_integration
+  title: اتصال GitHub / GitLab
+  summary: API فقط لیست اتصال‌ها را می‌دهد (GET /v1/me/git-integrations)؛ اتصال جدید از کنسول انجام می‌شود.
+  manual_steps:
+    - در کنسول، بخش CI/CD یا تنظیمات برنامه را باز کنید و مخزن را متصل کنید.
+  console_url: https://console.liara.ir
+- id: nameservers
+  title: تغییر نیم‌سرور دامنه
+  summary: نیم‌سرورها نزد ثبت‌کننده (ایرنیک یا رجیسترار) تغییر می‌کنند، نه از API لیارا.
+  manual_steps:
+    - وارد پنل ثبت‌کننده‌ی دامنه شوید (برای .ir پنل nic.ir).
+    - نیم‌سرورها را به مقادیری که در کارت زون نشان داده شده تغییر دهید.
+    - اعمال شدن ممکن است تا ۲۴ ساعت طول بکشد؛ «انجام شد» را بزنید تا دوباره بررسی کنیم.
+  verify_tool: recheck_dns
+- id: dns_records_external
+  title: ثبت رکورد DNS در سرویس DNS دیگر
+  summary: اگر DNS دامنه روی لیارا نیست (مثلاً Cloudflare)، رکوردها را باید خودتان ثبت کنید.
+  manual_steps:
+    - سه رکورد نمایش‌داده‌شده (ALIAS/CNAME ریشه، TXT مالکیت، CNAME مخصوص SSL) را در پنل DNS ثبت کنید.
+    - در Cloudflare حالت Proxy (ابر نارنجی) را برای این رکوردها خاموش کنید.
+    - «انجام شد» را بزنید تا وضعیت دامنه و گواهی بررسی شود.
+  verify_tool: check_domain
+- id: no_alerts
+  title: هشدار / Webhook ندارد
+  summary: لیارا API هشدار یا webhook ندارد؛ پایش با polling انجام می‌شود (Watcher این محصول).
+- id: token_scopes
+  title: محدود کردن دسترسی توکن
+  summary: توکن‌ها scope ندارند و دسترسی کامل دارند؛ این محصول با لایه‌ی سیاست (allowlist، tier، cost guard) جبران می‌کند.
+- id: ws_exec
+  title: اجرای دستور داخل کانتینر
+  summary: endpoint وب‌سوکت exec توکن را در query string می‌فرستد؛ در این نسخه عمداً استفاده نمی‌شود.
+- id: metrics_granularity
+  title: دقت متریک‌ها
+  summary: واحد و بازه‌ی نمونه‌برداری متریک‌ها مستند نیست؛ برای علائم فوری از probe مستقیم HTTP و لاگ‌ها استفاده می‌شود.
