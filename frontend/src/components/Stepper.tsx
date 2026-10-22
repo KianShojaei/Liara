@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { STEP_NAMES } from '../format'
-import { Card } from './ui'
+import { Card, Expander, Ltr } from './ui'
 
 export interface StepState {
   name: string
@@ -9,26 +8,34 @@ export interface StepState {
 }
 
 export function StepperCard({ steps, logs }: { steps: StepState[]; logs: string[] }) {
-  const [open, setOpen] = useState(false)
-  const icon = (s: string) => (s === 'done' ? '✅' : s === 'failed' ? '❌' : '⏳')
+  const done = steps.filter((s) => s.status === 'done').length
+  const failed = steps.some((s) => s.status === 'failed')
+  const running = steps.some((s) => s.status === 'running')
   return (
-    <Card title="اجرای مراحل" icon="🚀">
-      <ol className="space-y-1 text-sm">
-        {steps.map((s) => (
-          <li key={s.name} className="flex items-center gap-2">
-            <span className={s.status === 'running' ? 'animate-pulse' : ''}>{icon(s.status)}</span>
-            <span>{STEP_NAMES[s.name] ?? s.name}</span>
-            {s.detail && <span className="mono text-xs text-slate-500">{s.detail}</span>}
-          </li>
-        ))}
+    <Card title="اجرای مراحل" icon="🚀" meta={<span className="text-xs text-muted">{done} از {steps.length}</span>}>
+      <ol className="relative space-y-3 pr-1">
+        {steps.map((s, i) => {
+          const last = i === steps.length - 1
+          return (
+            <li key={s.name} className="relative flex items-start gap-3">
+              {!last && <span className={`absolute right-[11px] top-6 h-[calc(100%-0.25rem)] w-0.5 ${s.status === 'done' ? 'bg-emerald-500' : 'bg-line'} ${s.status === 'running' ? 'animate-flow bg-[linear-gradient(to_bottom,#10b981_50%,transparent_50%)] bg-[length:100%_12px]' : ''}`} aria-hidden />}
+              <span className={`relative z-10 grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-bold ${s.status === 'done' ? 'bg-emerald-500 text-white dark:text-slate-950' : s.status === 'failed' ? 'bg-rose-500 text-white' : s.status === 'running' ? 'bg-emerald-500/20 text-emerald-500 ring-2 ring-emerald-500/50' : 'bg-raised text-muted'}`}>
+                {s.status === 'done' ? '✓' : s.status === 'failed' ? '✗' : s.status === 'running' ? <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> : i + 1}
+              </span>
+              <div className="min-w-0 pt-0.5">
+                <div className={`text-sm ${s.status === 'running' ? 'font-medium' : ''}`}>{STEP_NAMES[s.name] ?? s.name}</div>
+                {s.detail && <Ltr className="block truncate text-xs text-muted">{s.detail}</Ltr>}
+              </div>
+            </li>
+          )
+        })}
       </ol>
+      {failed && <div className="mt-3 text-xs text-rose-400">یکی از مراحل ناموفق بود؛ جزئیات در کارت خطا.</div>}
+      {running && !failed && <div className="mt-3 text-xs text-muted">در حال اجرا… این کارت به‌صورت زنده به‌روز می‌شود.</div>}
       {logs.length > 0 && (
-        <>
-          <button className="mt-2 text-xs text-slate-500 underline" onClick={() => setOpen(!open)}>
-            {open ? 'بستن خروجی' : `خروجی دیپلوی (${logs.length} خط)`}
-          </button>
-          {open && <pre className="mono mt-1 max-h-56 overflow-auto rounded-lg bg-slate-950 p-2 text-[11px] leading-5 text-slate-100">{logs.join('\n')}</pre>}
-        </>
+        <Expander label={`خروجی دیپلوی (${logs.length} خط)`}>
+          <pre className="code max-h-56 overflow-auto">{logs.join('\n')}</pre>
+        </Expander>
       )}
     </Card>
   )

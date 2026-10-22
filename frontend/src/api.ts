@@ -1,4 +1,4 @@
-import type { AppOverview, AuditRow, Incident, Limitation, PolicyTool, Proposal, Session, Status, TimelineEvent } from './types'
+import type { AppOverview, AuditRow, Incident, Limitation, PolicyTool, Project, Proposal, Session, Status, TimelineEvent } from './types'
 
 async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -21,6 +21,30 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
 }
 
 const get = <T,>(url: string) => request<T>('GET', url)
+const del = <T,>(url: string) => request<T>('DELETE', url)
+
+/** Multipart upload with progress (fetch has no upload progress; XHR does). */
+export function uploadProject(file: File, name: string, onProgress: (ratio: number) => void): Promise<Project> {
+  return new Promise((resolve, reject) => {
+    const form = new FormData()
+    form.append('file', file)
+    if (name) form.append('name', name)
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', '/api/projects/upload')
+    xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(e.loaded / e.total)
+    xhr.onload = () => {
+      try {
+        const data = JSON.parse(xhr.responseText || '{}')
+        if (xhr.status >= 200 && xhr.status < 300) resolve(data as Project)
+        else reject(new Error(`${xhr.status}: ${data.detail ?? xhr.statusText}`))
+      } catch (e) {
+        reject(e)
+      }
+    }
+    xhr.onerror = () => reject(new Error('آپلود ناموفق بود'))
+    xhr.send(form)
+  })
+}
 const post = <T,>(url: string, body?: unknown) => request<T>('POST', url, body ?? {})
 
 export const api = {
@@ -53,6 +77,12 @@ export const api = {
   policyTools: () => get<PolicyTool[]>('/api/policy/tools'),
   setWatch: (app: string, enabled: boolean, session_id: string) =>
     post<any>(`/api/watcher/${app}?enabled=${enabled}&session_id=${session_id}`),
+  projects: () => get<Project[]>('/api/projects'),
+  importGit: (url: string, branch: string, name: string) => post<Project>('/api/projects/git', { url, branch, name }),
+  registerLocal: (path: string) => post<Project>('/api/projects/local', { path }),
+  deleteProject: (name: string) => del<{ deleted: string }>(`/api/projects/${encodeURIComponent(name)}`),
+  wizardStart: (session_id: string, path: string, app: string, plan_id = '') =>
+    post<{ accepted: boolean }>(`/api/sessions/${session_id}/wizard/start`, { path, app, plan_id }),
   investigate: (session_id: string, app: string) =>
     post(`/api/sessions/${session_id}/investigate`, { app, window_minutes: 30, health_path: '/' }),
 }

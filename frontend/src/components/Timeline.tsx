@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useRef } from 'react'
-import type { Proposal, TimelineEvent } from '../types'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { CHECK_NAMES, checkDetail, time } from '../format'
+import type { Project, Proposal, TimelineEvent } from '../types'
 import { EvidenceCard, FixBriefCard, HypothesesCard, IncidentBanner, LogsCard, PatchCard, RemediationCard, VerificationCard } from './IncidentCards'
+import { IntakePanel, ProjectCard } from './Projects'
 import { ProposalCard } from './ProposalCard'
 import { StepperCard, type StepState } from './Stepper'
-import { Card } from './ui'
+import { Button, Card, Check } from './ui'
 import { AnalysisCard, EnvFormCard, ManualStepCard, PlanOptionsCard } from './WizardCards'
 
 type Block =
   | { kind: 'event'; event: TimelineEvent }
-  | { kind: 'proposal'; proposal: Proposal; seq: number; id: string }
+  | { kind: 'proposal'; proposal: Proposal; seq: number; id: string; ts: string }
   | { kind: 'stepper'; steps: StepState[]; logs: string[]; seq: number; id: string }
 
 /** Folds proposal_update into proposals and step/deploy_log into one stepper block. */
@@ -16,13 +18,18 @@ function fold(events: TimelineEvent[]): Block[] {
   const blocks: Block[] = []
   const proposals = new Map<string, Proposal>()
   let stepper: Extract<Block, { kind: 'stepper' }> | null = null
+  const patch = (id: string, next: Proposal) => {
+    proposals.set(id, next)
+    const idx = blocks.findIndex((b) => b.kind === 'proposal' && b.proposal.id === id)
+    if (idx >= 0) blocks[idx] = { ...(blocks[idx] as Extract<Block, { kind: 'proposal' }>), proposal: next }
+  }
   for (const e of events) {
     const p = e.payload
     switch (e.kind) {
       case 'proposal': {
         const prop = p as Proposal
         proposals.set(prop.id, prop)
-        blocks.push({ kind: 'proposal', proposal: prop, seq: e.seq, id: e.id })
+        blocks.push({ kind: 'proposal', proposal: prop, seq: e.seq, id: e.id, ts: e.ts })
         stepper = null
         break
       }
@@ -31,9 +38,7 @@ function fold(events: TimelineEvent[]): Block[] {
         if (prev) {
           const next = { ...prev, status: p.status, result: p.result ?? prev.result }
           if (p.error) next.result = { ...(next.result ?? {}), error: p.error }
-          proposals.set(p.id, next)
-          const idx = blocks.findIndex((b) => b.kind === 'proposal' && b.proposal.id === p.id)
-          if (idx >= 0) blocks[idx] = { ...(blocks[idx] as Extract<Block, { kind: 'proposal' }>), proposal: next }
+          patch(p.id, next)
         }
         break
       }
@@ -60,12 +65,7 @@ function fold(events: TimelineEvent[]): Block[] {
       case 'verification':
         if (p.proposal_id) {
           const prev = proposals.get(p.proposal_id)
-          if (prev) {
-            const next = { ...prev, status: p.status ?? prev.status, verification: p }
-            proposals.set(p.proposal_id, next)
-            const idx = blocks.findIndex((b) => b.kind === 'proposal' && b.proposal.id === p.proposal_id)
-            if (idx >= 0) blocks[idx] = { ...(blocks[idx] as Extract<Block, { kind: 'proposal' }>), proposal: next }
-          }
+          if (prev) patch(p.proposal_id, { ...prev, status: p.status ?? prev.status, verification: p })
         }
         blocks.push({ kind: 'event', event: e })
         break
@@ -76,9 +76,17 @@ function fold(events: TimelineEvent[]): Block[] {
   return blocks
 }
 
-export function Timeline({ events, sessionId, app }: { events: TimelineEvent[]; sessionId: string; app?: string }) {
+interface Props {
+  events: TimelineEvent[]
+  sessionId: string
+  app?: string
+  onStartDeploy: (path: string, app: string) => Promise<void>
+}
+
+export function Timeline({ events, sessionId, app, onStartDeploy }: Props) {
   const blocks = useMemo(() => fold(events), [events])
   const bottom = useRef<HTMLDivElement>(null)
+  const [intake, setIntake] = useState<Project | null>(null)
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [events.length])
@@ -88,21 +96,61 @@ export function Timeline({ events, sessionId, app }: { events: TimelineEvent[]; 
   return (
     <div className="space-y-3 pb-4">
       {blocks.length === 0 && (
-        <div className="card text-center text-sm text-slate-500">
-          سلام! من دستیار عملیاتی شما برای لیارا هستم. بگویید چه کاری انجام دهم؛ قبل از هر تغییر مهم از شما تأیید می‌گیرم.
+        <div className="space-y-3 animate-rise">
+          <div className="rounded-2xl border border-line bg-gradient-to-br from-emerald-500/10 via-surface to-surface p-5">
+            <div className="text-base font-semibold">سلام! من دستیار عملیاتی شما برای لیارا هستم.</div>
+            <p className="mt-1 text-sm text-muted">پروژه‌تان را وارد کنید تا دیپلوی کنم، یا در مورد وضعیت و مشکلات سایت بپرسید. هیچ تغییر مهمی بدون تأیید شما انجام نمی‌شود.</p>
+          </div>
+          <Card title="شروع دیپلوی" icon="🚀">
+            {!intake ? <IntakePanel compact onReady={setIntake} /> : null}
+            {intake && (
+              <div className="space-y-2">
+                <ProjectCard project={intake} onDeploy={onStartDeploy} />
+                <Button variant="ghost" size="sm" onClick={() => setIntake(null)}>
+                  پروژه‌ی دیگر
+                </Button>
+              </div>
+            )}
+          </Card>
         </div>
       )}
       {blocks.map((b) => {
-        if (b.kind === 'proposal') return <ProposalCard key={b.id} proposal={b.proposal} />
+        if (b.kind === 'proposal') return <ProposalCard key={b.id} proposal={b.proposal} ts={b.ts} />
         if (b.kind === 'stepper') return <StepperCard key={b.id} steps={b.steps} logs={b.logs} />
         return <EventCard key={b.event.id} e={b.event} sessionId={sessionId} app={app} />
       })}
-      {working && (
-        <div className="flex items-center gap-2 text-sm text-slate-500">
-          <span className="inline-block h-2 w-2 animate-ping rounded-full bg-emerald-500" /> در حال کار…
-        </div>
-      )}
+      {working && <Thinking />}
       <div ref={bottom} />
+    </div>
+  )
+}
+
+function Thinking() {
+  return (
+    <div className="flex items-end gap-2">
+      <Avatar role="assistant" />
+      <div className="skeleton h-9 w-40 rounded-2xl" aria-label="در حال کار" />
+    </div>
+  )
+}
+
+function Avatar({ role }: { role: 'user' | 'assistant' }) {
+  return (
+    <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm ${role === 'user' ? 'bg-emerald-500 text-white dark:text-slate-950' : 'bg-raised'}`} aria-hidden>
+      {role === 'user' ? '👤' : '🧭'}
+    </span>
+  )
+}
+
+function Message({ role, text, ts }: { role: string; text: string; ts: string }) {
+  const user = role === 'user'
+  return (
+    <div className={`flex items-end gap-2 ${user ? 'flex-row-reverse' : ''}`}>
+      <Avatar role={user ? 'user' : 'assistant'} />
+      <div className={`max-w-[85%] ${user ? 'items-end' : 'items-start'} flex flex-col gap-0.5`}>
+        <div className={`whitespace-pre-wrap rounded-2xl px-4 py-2 text-sm leading-7 ${user ? 'rounded-bl-md bg-emerald-500 text-white dark:text-slate-950' : 'rounded-br-md border border-line bg-surface'}`}>{text}</div>
+        <span className="px-1 text-[10px] text-muted">{time(ts)}</span>
+      </div>
     </div>
   )
 }
@@ -111,30 +159,52 @@ function EventCard({ e, sessionId, app }: { e: TimelineEvent; sessionId: string;
   const p = e.payload
   switch (e.kind) {
     case 'message':
-      return <Message role={p.role} text={p.text} />
+      return <Message role={p.role} text={p.text} ts={e.ts} />
     case 'status':
-      return <div className="text-xs text-slate-500">⏳ {p.text}</div>
+      return (
+        <div className="flex items-center gap-2 px-9 text-xs text-muted">
+          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+          {p.text}
+        </div>
+      )
     case 'notice':
       return (
-        <div className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 dark:border-sky-900 dark:bg-sky-900/20 dark:text-sky-100">
+        <div className="mr-9 rounded-xl border border-sky-400/30 bg-sky-400/10 px-3 py-2 text-xs text-sky-700 dark:text-sky-200">
           ℹ️ اقدام کم‌ریسک به‌صورت خودکار انجام شد: {p.title}
-          {p.detail && <div>{p.detail}</div>}
+          {p.detail && <div className="mt-0.5 opacity-80">{p.detail}</div>}
         </div>
       )
     case 'error':
       return (
         <Card tone="error" title="خطا" icon="⚠️">
           <div className="text-sm">{p.text}</div>
-          {p.steps && <ul className="mt-1 text-xs">{p.steps.map((s: any, i: number) => <li key={i}>{s.ok ? '✓' : '✗'} {s.name}: {s.detail}</li>)}</ul>}
+          {p.steps && (
+            <ul className="mt-2 space-y-1 text-xs">
+              {p.steps.map((s: any, i: number) => (
+                <li key={i} className="flex items-center gap-2">
+                  <Check ok={!!s.ok} /> {CHECK_NAMES[s.name] ?? s.name}: {checkDetail(s.detail)}
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
       )
     case 'success':
       return (
         <Card tone="success" title={p.text} icon="🎉">
           {p.url && (
-            <a className="text-sm text-emerald-700 underline" href={p.url} target="_blank" rel="noreferrer">
-              {p.url}
+            <a className="btn-primary mt-1 w-full" href={p.url} target="_blank" rel="noreferrer" dir="ltr">
+              باز کردن سایت ↗ <span className="mono opacity-90">{p.url}</span>
             </a>
+          )}
+          {p.steps && (
+            <ul className="mt-3 grid gap-1 text-xs sm:grid-cols-2">
+              {p.steps.map((s: any, i: number) => (
+                <li key={i} className="flex items-center gap-2">
+                  <Check ok={!!s.ok} /> {CHECK_NAMES[s.name] ?? s.name}: {checkDetail(s.detail)}
+                </li>
+              ))}
+            </ul>
           )}
         </Card>
       )
@@ -163,17 +233,12 @@ function EventCard({ e, sessionId, app }: { e: TimelineEvent; sessionId: string;
     case 'patch':
       return <PatchCard p={p} />
     case 'verify_round':
-      return <div className="text-xs text-slate-500">🔁 دور {p.round}: پاسخ موفق {p.probe_success == null ? '—' : Math.round(p.probe_success * 100) + '٪'} · حافظه {p.memory ? Math.round(p.memory / 1024 / 1024) + ' MB' : '—'}</div>
+      return (
+        <div className="px-9 text-xs text-muted">
+          🔁 دور {p.round}: پاسخ موفق {p.probe_success == null ? '—' : Math.round(p.probe_success * 100) + '٪'} · حافظه {p.memory ? Math.round(p.memory / 1024 / 1024) + ' MB' : '—'}
+        </div>
+      )
     default:
       return null
   }
-}
-
-function Message({ role, text }: { role: string; text: string }) {
-  const user = role === 'user'
-  return (
-    <div className={`flex ${user ? 'justify-start' : 'justify-end'}`}>
-      <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2 text-sm leading-7 ${user ? 'bg-emerald-600 text-white' : 'bg-white shadow-sm dark:bg-slate-900'}`}>{text}</div>
-    </div>
-  )
 }

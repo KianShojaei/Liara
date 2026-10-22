@@ -158,3 +158,23 @@ export interface AuditRow {
   outcome: string
   detail: any
 }
+
+export interface ProjectAnalysis {
+  path?: string
+  platform: string
+  platform_reason?: string
+  port: number
+  env_keys: string[]
+  secret_env_keys?: string[]
+  databases: string[]
+  health_path: string
+  warnings: string[]
+  has_dockerfile?: boolean
+  error?: string
+}
+
+export interface Project {
+  name: string
+  path: string
+  analysis: ProjectAnalysis
+}

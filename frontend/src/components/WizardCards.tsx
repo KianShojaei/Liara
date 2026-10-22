@@ -1,27 +1,25 @@
 import { useState } from 'react'
 import { api } from '../api'
-import { num, toman } from '../format'
-import { Card, Chip } from './ui'
-
-const PLATFORM: Record<string, string> = { node: 'Node.js', next: 'Next.js', react: 'React (استاتیک)', vue: 'Vue', angular: 'Angular', django: 'Django', flask: 'Flask', python: 'Python', laravel: 'Laravel', php: 'PHP', dotnet: '.NET', go: 'Go', docker: 'Docker', static: 'سایت استاتیک', wordpress: 'WordPress' }
+import { PLATFORM, num, toman } from '../format'
+import { Button, Card, Chip, Ltr } from './ui'
 
 export function AnalysisCard({ p }: { p: Record<string, any> }) {
   return (
     <Card title="نتیجه‌ی بررسی پروژه" icon="🔍" tone="info">
-      <p className="text-sm leading-6">{p.explanation}</p>
-      <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
-        <Chip>پلتفرم: {PLATFORM[p.platform] ?? p.platform}</Chip>
-        <Chip>پورت: {p.port}</Chip>
-        <Chip>مسیر سلامت: <span className="mono">{p.health_path}</span></Chip>
+      <p className="text-sm">{p.explanation}</p>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        <Chip tone="info">پلتفرم: {PLATFORM[p.platform] ?? p.platform}</Chip>
+        <Chip>پورت: <Ltr>{p.port}</Ltr></Chip>
+        <Chip>مسیر سلامت: <Ltr>{p.health_path}</Ltr></Chip>
         {(p.databases ?? []).map((d: string) => (
-          <Chip key={d}>دیتابیس: {d}</Chip>
+          <Chip key={d} tone="violet">دیتابیس: {d}</Chip>
         ))}
-        {(p.env_keys ?? []).length > 0 && <Chip>{p.env_keys.length} متغیر محیطی</Chip>}
+        {(p.env_keys ?? []).length > 0 && <Chip tone="warning">{p.env_keys.length} متغیر محیطی</Chip>}
       </div>
       {(p.warnings ?? []).length > 0 && (
-        <ul className="mt-2 list-disc pr-5 text-xs text-amber-700 dark:text-amber-300">
+        <ul className="mt-2 space-y-0.5 text-xs text-amber-400">
           {p.warnings.map((w: string) => (
-            <li key={w}>{w}</li>
+            <li key={w}>⚠ {w}</li>
           ))}
         </ul>
       )}
@@ -41,30 +39,40 @@ export function PlanOptionsCard({ p, sessionId }: { p: Record<string, any>; sess
       setSaving(false)
     }
   }
+  const options: any[] = p.options ?? []
+  const fitting = options.filter((o) => !(o.reasons ?? []).some((r: string) => r.startsWith('RAM')))
+  const [showAll, setShowAll] = useState(false)
+  const list = showAll ? options : fitting.slice(0, 4)
   return (
-    <Card title={`انتخاب پلن برای ${p.app_name}`} icon="💳" tone={p.balance_ok ? 'default' : 'warning'}>
-      <div className="mb-2 text-sm">
-        موجودی: <b>{toman(p.balance)}</b> — {p.balance_message}
-        {p.app_exists && <span className="mr-2 text-xs text-slate-500">(برنامه از قبل وجود دارد؛ پلن فعلی حفظ می‌شود)</span>}
-      </div>
-      <div className="space-y-1.5">
-        {p.options.map((o: any) => (
-          <label key={o.plan_id} className={`flex cursor-pointer items-start gap-2 rounded-xl border p-2 text-sm ${chosen === o.plan_id ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-slate-200 dark:border-slate-800'}`}>
-            <input type="radio" name={`plan-${p.app_name}`} className="mt-1" checked={chosen === o.plan_id} disabled={saving} onChange={() => choose(o.plan_id)} />
-            <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="mono font-semibold">{o.plan_id}</span>
-                {o.recommended && <Chip cls="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">پیشنهاد ما</Chip>}
-                <span className="text-xs text-slate-500">{num(o.ram_gb, 2)} GB RAM · {num(o.cpu_cores, 1)} CPU · {num(o.disk_gb, 0)} GB دیسک</span>
-              </div>
-              <div className="text-xs">
-                {o.hourly_price ? `${toman(o.hourly_price)} در ساعت (${toman(o.monthly_price)} در ماه)` : 'رایگان'} · با موجودی فعلی: {o.runway_label}
-              </div>
-              {o.reasons?.length > 0 && <div className="mt-0.5 text-xs text-slate-500">{o.reasons.join(' · ')}</div>}
+    <Card title={`انتخاب پلن برای ${p.app_name}`} icon="💳" tone={p.balance_ok ? 'default' : 'warning'} meta={<Chip tone={p.low_balance || !p.balance_ok ? 'warning' : 'success'}>موجودی {toman(p.balance)}</Chip>}>
+      <p className="text-sm text-muted">
+        {p.balance_message}
+        {p.app_exists && ' (برنامه از قبل وجود دارد؛ پلن فعلی حفظ می‌شود)'}
+      </p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        {list.map((o: any) => (
+          <label key={o.plan_id} className={`cursor-pointer rounded-xl border p-3 text-sm transition-colors ${chosen === o.plan_id ? 'border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-500/30' : 'border-line hover:border-emerald-500/40'}`}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2">
+                <input type="radio" name={`plan-${p.app_name}`} className="accent-emerald-500" checked={chosen === o.plan_id} disabled={saving} onChange={() => choose(o.plan_id)} />
+                <Ltr className="font-semibold">{o.plan_id}</Ltr>
+              </span>
+              {o.recommended && <Chip tone="success">پیشنهاد ما</Chip>}
             </div>
+            <div className="mt-1 text-xs text-muted">
+              {num(o.ram_gb, 2)} GB RAM · {num(o.cpu_cores, 1)} CPU · {num(o.disk_gb, 0)} GB دیسک
+            </div>
+            <div className="mt-1 text-sm font-medium">{o.hourly_price ? `${toman(o.hourly_price)} / ساعت` : 'رایگان'}</div>
+            <div className="text-xs text-muted">{o.hourly_price ? `${toman(o.monthly_price)} / ماه · ` : ''}کفاف موجودی: {o.runway_label}</div>
+            {o.reasons?.length > 0 && <div className="mt-1 text-[11px] text-muted">{o.reasons.join(' · ')}</div>}
           </label>
         ))}
       </div>
+      {options.length > list.length && (
+        <Button variant="ghost" size="sm" className="mt-2" onClick={() => setShowAll(true)}>
+          نمایش همه‌ی پلن‌ها ({options.length})
+        </Button>
+      )}
     </Card>
   )
 }
@@ -83,22 +91,22 @@ export function EnvFormCard({ p, sessionId }: { p: Record<string, any>; sessionI
     }
   }
   return (
-    <Card title="متغیرهای محیطی" icon="🔐">
-      <p className="text-sm leading-6">{p.text}</p>
-      <div className="mt-2 space-y-2">
+    <Card title="متغیرهای محیطی" icon="🔐" meta={done ? <Chip tone="success">ثبت شد</Chip> : undefined}>
+      <p className="text-sm text-muted">{p.text}</p>
+      <div className="mt-3 space-y-2">
         {(p.keys as string[]).map((k) => (
-          <label key={k} className="flex items-center gap-2 text-sm">
-            <span className="mono w-40 shrink-0 text-xs">{k}</span>
-            <input className="input" disabled={done} type={(p.secret_keys as string[]).includes(k) ? 'password' : 'text'} value={values[k]} onChange={(e) => setValues({ ...values, [k]: e.target.value })} placeholder="خالی = تنظیم نشود" />
+          <label key={k} className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-2">
+            <Ltr className="w-44 shrink-0 text-xs">{k}</Ltr>
+            <input className="input" dir="ltr" disabled={done} type={(p.secret_keys as string[]).includes(k) ? 'password' : 'text'} value={values[k]} onChange={(e) => setValues({ ...values, [k]: e.target.value })} placeholder="خالی = تنظیم نشود" />
           </label>
         ))}
       </div>
       {!done ? (
-        <button className="btn-primary mt-3" disabled={busy} onClick={submit}>
+        <Button variant="primary" className="mt-3" loading={busy} onClick={submit}>
           ادامه
-        </button>
+        </Button>
       ) : (
-        <div className="mt-2 text-xs text-emerald-700">ثبت شد؛ کارت تأیید در ادامه می‌آید.</div>
+        <div className="mt-2 text-xs text-emerald-500">ثبت شد؛ کارت تأیید در ادامه می‌آید.</div>
       )}
     </Card>
   )
@@ -107,42 +115,99 @@ export function EnvFormCard({ p, sessionId }: { p: Record<string, any>; sessionI
 export function ManualStepCard({ p, sessionId, app }: { p: Record<string, any>; sessionId: string; app?: string }) {
   const [done, setDone] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [copied, setCopied] = useState<string | null>(null)
   const confirm = async () => {
     setBusy(true)
     try {
-      await api.manualStepDone(sessionId, p.id, { app, zone: p.zone, domain_id: p.domain_id })
+      await api.manualStepDone(sessionId, p.id, { app, zone: p.zone, domain_id: p.domain_id, ...(p.context ?? {}) })
       setDone(true)
     } finally {
       setBusy(false)
     }
   }
+  const copy = async (key: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopied(key)
+      setTimeout(() => setCopied(null), 1500)
+    } catch {
+      /* clipboard unavailable */
+    }
+  }
+  const records: { type: string; name: string; value: string; note?: string }[] = Array.isArray(p.records) ? p.records : []
+  const legacyRecords = !Array.isArray(p.records) && p.records ? Object.entries(p.records as Record<string, unknown>) : []
   return (
-    <Card title={`کار دستی: ${p.title}`} icon="🖐️" tone="warning">
-      <p className="text-sm leading-6">{p.summary}</p>
-      {p.reason && <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">{p.reason}</p>}
-      {p.records && (
-        <div className="mono mt-2 rounded-lg bg-slate-100 p-2 text-xs dark:bg-slate-950">
-          {Object.entries(p.records).map(([k, v]) => (
-            <div key={k}>
-              {k}: {String(v)}
+    <Card title={p.title} icon="🖐️" tone="warning" meta={<Chip tone="warning">نیاز به کار دستی</Chip>}>
+      <p className="text-sm">{p.summary}</p>
+      {p.domain && <p className="mt-1 text-sm">دامنه: <Ltr className="font-medium">{p.domain}</Ltr></p>}
+      {p.reason && <p className="mt-1 text-sm text-amber-400">{p.reason}</p>}
+      {records.length > 0 && (
+        <div className="mt-3 overflow-x-auto rounded-xl border border-line">
+          <table className="w-full text-xs">
+            <thead className="bg-raised/60 text-muted">
+              <tr>
+                <th className="px-3 py-1.5 text-right font-medium">نوع</th>
+                <th className="px-3 py-1.5 text-right font-medium">نام</th>
+                <th className="px-3 py-1.5 text-right font-medium">مقدار</th>
+                <th className="px-3 py-1.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {records.map((r, i) => (
+                <tr key={i} className="border-t border-line">
+                  <td className="px-3 py-1.5"><Chip tone="info">{r.type}</Chip></td>
+                  <td className="px-3 py-1.5"><Ltr className="select-all">{r.name}</Ltr></td>
+                  <td className="px-3 py-1.5">
+                    <Ltr className="select-all break-all">{r.value}</Ltr>
+                    {r.note && <div className="text-[11px] text-muted">{r.note}</div>}
+                  </td>
+                  <td className="px-2 py-1.5 text-left">
+                    <Button size="sm" variant="ghost" onClick={() => copy(`${i}`, r.value)}>{copied === `${i}` ? '✓ کپی شد' : 'کپی'}</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {legacyRecords.length > 0 && (
+        <div className="mt-2 rounded-xl border border-line bg-bg/60 p-3">
+          {legacyRecords.map(([k, v]) => (
+            <div key={k} className="flex flex-wrap gap-2 text-xs">
+              <span className="text-muted">{k}</span>
+              <Ltr className="select-all">{String(v)}</Ltr>
             </div>
           ))}
         </div>
       )}
-      <ol className="mt-2 list-decimal space-y-1 pr-5 text-sm">
-        {(p.manual_steps ?? []).map((s: string) => (
-          <li key={s}>{s}</li>
+      <ol className="mt-3 space-y-2 text-sm">
+        {(p.manual_steps ?? []).map((s: string, i: number) => (
+          <li key={s} className="flex gap-3">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-amber-400/20 text-xs font-semibold text-amber-500">{i + 1}</span>
+            <span>{s}</span>
+          </li>
         ))}
       </ol>
-      <div className="mt-3 flex flex-wrap gap-2">
+      {p.extra && (
+        <div className="mt-3 rounded-xl border border-line bg-bg/50 p-3 text-xs">
+          <div className="font-medium">{p.extra.title}</div>
+          <div className="mt-0.5 text-muted">{p.extra.summary}</div>
+          {p.extra.manual_steps && (
+            <ol className="mt-1 list-decimal space-y-0.5 pr-4 text-muted">
+              {p.extra.manual_steps.map((s: string) => <li key={s}>{s}</li>)}
+            </ol>
+          )}
+        </div>
+      )}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <Button variant="primary" loading={busy} disabled={done} onClick={confirm}>
+          {done ? '✓ بررسی شد' : 'انجام شد، دوباره بررسی کن'}
+        </Button>
         {p.console_url && (
           <a className="btn-ghost" href={p.console_url} target="_blank" rel="noreferrer">
             باز کردن کنسول لیارا ↗
           </a>
         )}
-        <button className="btn-primary" disabled={busy || done} onClick={confirm}>
-          {done ? '✓ بررسی شد' : 'انجام شد، دوباره بررسی کن'}
-        </button>
       </div>
     </Card>
   )

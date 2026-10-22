@@ -1,12 +1,12 @@
 const KEY = 'copilot.theme'
 export type Theme = 'light' | 'dark'
 
-/** Light by default; dark only when the user picks it (stored per browser). */
+/** Dark by default (the console look); the choice is stored per browser. */
 export function savedTheme(): Theme {
   try {
-    return localStorage.getItem(KEY) === 'dark' ? 'dark' : 'light'
+    return localStorage.getItem(KEY) === 'light' ? 'light' : 'dark'
   } catch {
-    return 'light'
+    return 'dark'
   }
 }
 
