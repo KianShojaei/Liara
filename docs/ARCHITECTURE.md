@@ -38,6 +38,7 @@ Short version in the README. This page is the engineering reference.
 | `app/bridge/fix_brief.py` | FixBrief builder, command-runner adapter, `git apply` patching, demo-patch mode |
 | `app/llm/gateway.py` | OpenAI-compatible client (BoxAPI), strong/small routing, native tools or JSON action protocol, structured outputs with repair, embeddings, token accounting |
 | `app/agent/loop.py` | Keyword router → LLM router → tool loop; dispatch to wizards/investigator/proposals |
+| `app/api/projects.py` | Project intake: archive upload (zip-slip guarded), git clone, local folder; stored under `data/projects` |
 | `app/api/routes.py` | REST + SSE for the UI; `app/mcp_server.py` MCP tools; `app/cli.py` Typer CLI |
 | `app/knowledge/` | `limitations.yaml` registry; RAG over Liara docs (embeddings or keyword fallback) |
 

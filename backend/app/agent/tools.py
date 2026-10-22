@@ -282,13 +282,46 @@ def register_tools(rt: Runtime) -> None:  # noqa: C901 - one registration table 
     async def add_domain(args: dict[str, Any]) -> dict[str, Any]:
         domain_id = await client.create_domain(args["domain"], args["app"])
         domain = await client.check_domain(domain_id)
-        return {
+        records = [
+            {
+                "type": "CNAME",
+                "name": "@ یا www",
+                "value": domain.cname_record or f"{args['app']}.liara.run",
+                "note": "اگر DNS شما ALIAS/ANAME برای ریشه دارد از آن استفاده کنید",
+            },
+            {
+                "type": "TXT",
+                "name": "@",
+                "value": domain.verification_code or "(کد مالکیت در کنسول)",
+                "note": "اثبات مالکیت دامنه",
+            },
+        ]
+        result = {
             "domain_id": domain_id,
             "domain": domain.name,
             "cname": domain.cname_record,
             "verification_code": domain.verification_code,
             "status": domain.status,
+            "records": records,
         }
+        session_id = args.get("_session_id", "")
+        if session_id and rt.knowledge is not None:
+            card = rt.knowledge.limitation("dns_records_external") or {}
+            if args["domain"].endswith(".ir"):
+                card = {**card, "extra": rt.knowledge.limitation("nameservers")}
+            rt.emit(
+                session_id,
+                "manual_step",
+                {
+                    **card,
+                    "records": records,
+                    "domain_id": domain_id,
+                    "domain": domain.name,
+                    "context": {"domain_id": domain_id},
+                    "resume": "check_domain",
+                },
+            )
+        return result
 
     async def verify_domain(args: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
         domain = await client.check_domain(result["domain_id"])

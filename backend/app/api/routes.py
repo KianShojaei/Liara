@@ -24,6 +24,7 @@ from app.api.schemas import (
     StartInvestigation,
     WizardEnv,
     WizardPlan,
+    WizardStart,
 )
 from app.bridge.fix_brief import build_fix_brief, load_demo_patch, run_coding_agent, write_fix_brief
 from app.deploy.advisor import runway
@@ -163,6 +164,26 @@ def reject(proposal_id: str, body: RejectProposal, request: Request) -> dict[str
 
 
 # ------------------------------------------------------------------- wizard
+
+
+@router.post("/sessions/{session_id}/wizard/start")
+async def wizard_start(session_id: str, body: WizardStart, request: Request) -> dict[str, Any]:
+    """Start the deploy wizard for an uploaded/cloned/local project (UI intake panel)."""
+    rt = _rt(request)
+    if rt.store.get_session(session_id) is None:
+        raise HTTPException(404, "session not found")
+    rt.emit(
+        session_id,
+        "message",
+        {
+            "role": "user",
+            "text": f"دیپلوی {body.path}" + (f" با نام {body.app}" if body.app else ""),
+        },
+    )
+    asyncio.create_task(
+        _agent(request).wizard.start(session_id, body.path, app_name=body.app, plan_id=body.plan_id)
+    )
+    return {"accepted": True}
 
 
 @router.post("/sessions/{session_id}/wizard/env")

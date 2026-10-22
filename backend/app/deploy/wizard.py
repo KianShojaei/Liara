@@ -58,6 +58,7 @@ class DeployWizard:
         domain: str = "",
     ) -> WizardState:
         rt = self._rt
+        project_path = resolve_project_path(project_path)
         state = WizardState(
             session_id, project_path, app_name or _slug(project_path), domain=domain
         )
@@ -359,7 +360,7 @@ def resolve_project_path(path: str) -> str:
     candidate = Path(path).expanduser()
     if candidate.is_absolute():
         return str(candidate)
-    for base in (REPO_ROOT, Path.cwd()):
+    for base in (REPO_ROOT / "data" / "projects", REPO_ROOT, Path.cwd()):
         if (base / candidate).is_dir():
             return str((base / candidate).resolve())
     return str((REPO_ROOT / candidate).resolve())

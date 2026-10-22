@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.agent.context import build_runtime
 from app.agent.loop import Agent
+from app.api.projects import router as projects_router
 from app.api.routes import router
 from app.config import REPO_ROOT, get_settings
 from app.watcher.scheduler import Watcher
@@ -43,6 +44,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(router)
+app.include_router(projects_router)
 
 
 @app.get("/healthz")

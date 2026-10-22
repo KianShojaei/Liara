@@ -57,3 +57,9 @@ class Remediate(BaseModel):
     option_id: str
     session_id: str = ""
     edited_args: dict[str, Any] | None = None
+
+
+class WizardStart(BaseModel):
+    path: str
+    app: str = ""
+    plan_id: str = ""

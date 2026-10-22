@@ -124,3 +124,38 @@ async def test_deploy_wizard_creates_app_and_verifies(api, tmp_path):
         if e["kind"] == "step" and e["payload"]["status"] == "done"
     ]
     assert steps == ["create_app", "liara_json", "deploy", "verify"]
+
+
+@pytest.mark.asyncio
+async def test_project_upload_then_wizard_start(api, tmp_path):
+    import io
+    import zipfile
+
+    from app.api.projects import router as projects_router
+
+    client, runtime = api
+    client._transport.app.include_router(projects_router)  # type: ignore[attr-defined]
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("site/package.json", '{"dependencies": {"express": "4"}}')
+        zf.writestr("site/index.js", "app.listen(4200)")
+    uploaded = (
+        await client.post(
+            "/api/projects/upload",
+            files={"file": ("uploaded-site.zip", buf.getvalue(), "application/zip")},
+        )
+    ).json()
+    assert uploaded["analysis"]["platform"] == "node" and uploaded["analysis"]["port"] == 4200
+    session = (await client.post("/api/sessions", json={"title": "u"})).json()
+    await client.post(
+        f"/api/sessions/{session['id']}/wizard/start",
+        json={"path": uploaded["name"], "app": "uploaded"},
+    )
+    try:
+        events = await wait_kind(client, session["id"], "proposal")
+    except AssertionError:
+        print((await client.get(f"/api/sessions/{session['id']}/timeline")).json())
+        raise
+    proposal = next(e["payload"] for e in events if e["kind"] == "proposal")
+    assert proposal["args"]["port"] == 4200 and proposal["args"]["create"]
+    assert (await client.delete("/api/projects/uploaded-site")).json()["deleted"]

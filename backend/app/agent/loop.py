@@ -343,7 +343,12 @@ class Agent:
             )
             return
         _, decision, _ = self._rt.proposals.propose(
-            session_id, tool, args, title=title, summary=summary, impact=impact
+            session_id,
+            tool,
+            {**args, "_session_id": session_id},
+            title=title,
+            summary=summary,
+            impact=impact,
         )
         text = (
             "کارت تأیید آماده است؛ بعد از تأیید شما اجرا و نتیجه بررسی می‌شود."

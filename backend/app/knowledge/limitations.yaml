@@ -7,7 +7,7 @@
     - وارد console.liara.ir شوید.
     - از منوی «مالی / شارژ حساب» مبلغ را انتخاب و پرداخت کنید.
     - به اینجا برگردید و «انجام شد» را بزنید تا موجودی دوباره بررسی شود.
-  console_url: https://console.liara.ir/billing
+  console_url: https://console.liara.ir/credit/add
   verify_tool: get_billing
 - id: create_api_token
   title: ساخت توکن API
