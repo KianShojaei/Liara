@@ -17,6 +17,9 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+for _stream in (sys.stdout, sys.stderr):  # Windows consoles default to cp1252; we print Persian
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, str(ROOT / "backend"))
 
 CANDIDATES = [

@@ -26,63 +26,44 @@ app = FastAPI(title="Mock Liara API")
 
 SCENARIOS = {"healthy", "memory_leak", "cpu_saturation", "error_burst", "bad_release"}
 
+
 # Plan ids, resources and hourly prices VERIFIED against a real account via tools/probe.py
-# (October 2026). "ir-large" is an extrapolated placeholder for upgrade demos.
+# (October 2026). Only the plans marked available on that account are listed as available.
+def _plan(
+    ram: float,
+    cpu: float,
+    volume: float,
+    price: float,
+    *,
+    available: bool = True,
+    region: str = "iran",
+) -> dict[str, Any]:
+    return {
+        "available": available,
+        "region": region,
+        "RAM": {"amount": ram},
+        "CPU": {"amount": cpu},
+        "volume": volume,
+        "price": price,
+        "storageClass": "SSD",
+    }
+
+
 PLAN_CATALOG: dict[str, dict[str, Any]] = {
-    "free": {
-        "available": False,
-        "region": "iran",
-        "RAM": {"amount": 0.125},
-        "CPU": {"amount": 0.125},
-        "volume": 0,
-        "price": 0,
-        "storageClass": None,
-    },
-    "ir-mini": {
-        "available": False,
-        "region": "iran",
-        "RAM": {"amount": 0.25},
-        "CPU": {"amount": 0.25},
-        "volume": 2.5,
-        "price": 763.88,
-        "storageClass": "SSD",
-    },
-    "ir-small": {
-        "available": True,
-        "region": "iran",
-        "RAM": {"amount": 0.5},
-        "CPU": {"amount": 0.5},
-        "volume": 5,
-        "price": 1319.44,
-        "storageClass": "SSD",
-    },
-    "ir-medium": {
-        "available": True,
-        "region": "iran",
-        "RAM": {"amount": 1},
-        "CPU": {"amount": 1},
-        "volume": 10,
-        "price": 2291.66,
-        "storageClass": "SSD",
-    },
-    "ir-large": {
-        "available": True,
-        "region": "iran",
-        "RAM": {"amount": 2},
-        "CPU": {"amount": 2},
-        "volume": 20,
-        "price": 4583.33,
-        "storageClass": "SSD",
-    },
-    "small": {
-        "available": False,
-        "region": "germany",
-        "RAM": {"amount": 0.5},
-        "CPU": {"amount": 0.25},
-        "volume": 2.5,
-        "price": 100,
-        "storageClass": "NVMe",
-    },
+    "free": {**_plan(0.125, 0.125, 0, 0, available=False), "storageClass": None},
+    "ir-mini": _plan(0.25, 0.25, 2.5, 763.88, available=False),
+    "ir-small": _plan(0.5, 0.5, 5, 1319.44),
+    "ir-medium": _plan(1, 1, 10, 2291.66),
+    "standard-base": _plan(2, 1, 20, 4097.22),
+    "standard-plus": _plan(4, 2, 40, 7361.11),
+    "pro": _plan(8, 4, 80, 12777.77),
+    "mini-g2": _plan(0.25, 0.25, 2.5, 381.94, available=False),
+    "small-g2": _plan(0.5, 0.5, 5, 659.72),
+    "medium-g2": _plan(1, 1, 10, 1145.83),
+    "standard-base-g2": _plan(2, 1, 20, 2048.61),
+    "standard-plus-g2": _plan(4, 2, 40, 3680.55),
+    "pro-g2": _plan(8, 4, 80, 6388.88),
+    "small": _plan(0.5, 0.25, 2.5, 100, available=False, region="germany"),
 }
 
 PLAN_MEMORY_BYTES = {pid: int(p["RAM"]["amount"] * 1024**3) for pid, p in PLAN_CATALOG.items()}
@@ -108,7 +89,7 @@ class MockState:
         self._seed()
 
     def _seed(self) -> None:
-        self.add_project("shop-demo", "node", "ir-small", deployed=True)
+        self.add_project("shop-demo", "node", "small-g2", deployed=True)
         self.add_release("shop-demo", "READY", "v1", message="v1 initial release", age=3600)
 
     def add_project(

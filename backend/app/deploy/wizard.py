@@ -349,6 +349,22 @@ class DeployWizard:
         return state
 
 
+def resolve_project_path(path: str) -> str:
+    """Relative paths are resolved against the repository root first (the backend usually
+    runs from backend/), then against the current directory."""
+    from pathlib import Path
+
+    from app.config import REPO_ROOT
+
+    candidate = Path(path).expanduser()
+    if candidate.is_absolute():
+        return str(candidate)
+    for base in (REPO_ROOT, Path.cwd()):
+        if (base / candidate).is_dir():
+            return str((base / candidate).resolve())
+    return str((REPO_ROOT / candidate).resolve())
+
+
 def _slug(path: str) -> str:
     import re
     from pathlib import Path

@@ -112,7 +112,7 @@ async def test_deploy_wizard_creates_app_and_verifies(api, tmp_path):
     )
     events = await wait_kind(client, session["id"], "proposal")
     plan = next(e["payload"] for e in events if e["kind"] == "plan_options")
-    assert plan["recommended_plan_id"] == "ir-small" and plan["app_exists"] is False
+    assert plan["recommended_plan_id"] == "small-g2" and plan["app_exists"] is False
     proposal = next(e["payload"] for e in events if e["kind"] == "proposal")
     assert proposal["args"]["create"] and proposal["args"]["port"] == 4000
     await client.post(f"/api/proposals/{proposal['id']}/approve", json={})

@@ -268,7 +268,7 @@ async def deploy_project(
     args = {
         "app": app,
         "path": path,
-        "plan_id": plan_id or "ir-small",
+        "plan_id": plan_id or "small-g2",
         "platform": platform or analysis["platform"],
         "port": port or analysis["port"],
         "variables": {},

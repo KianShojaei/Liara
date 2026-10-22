@@ -12,6 +12,7 @@ function Start-Window($title, $workdir, $command) {
 
 Start-Window "mock-liara" $root "& '$py' -m uvicorn tools.mock_liara.server:app --port 8081"
 Start-Window "shop-demo" (Join-Path $root "demo\shop-demo") "if (-not (Test-Path node_modules)) { npm install }; `$env:FAULT_MODE='none'; `$env:PORT='3000'; node src\index.js"
+foreach ($i in 1..20) { try { Invoke-WebRequest -UseBasicParsing "http://127.0.0.1:8081/__mock/requests" -TimeoutSec 2 | Out-Null; break } catch { Start-Sleep 1 } }
 Start-Window "backend" (Join-Path $root "backend") "`$env:DEMO_APP_URL='http://127.0.0.1:3000'; & '$py' -m uvicorn app.main:app --port 8000"
 Start-Window "frontend" (Join-Path $root "frontend") "if (-not (Test-Path node_modules)) { npm install }; npm run dev"
 Start-Sleep 6

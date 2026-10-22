@@ -213,6 +213,16 @@ async def compat_create(client: Any, kwargs: dict[str, Any]) -> Any:
             return await client.chat.completions.create(**kwargs)
         except Exception as exc:  # noqa: BLE001
             message = mask_text(str(exc))
+            if (
+                "reasoning_effort" in message
+                and kwargs.get("reasoning_effort") != "none"
+                and adjustments < 3
+            ):
+                # BoxAPI: function tools on gpt-6* require reasoning_effort="none" on /chat/completions
+                kwargs["reasoning_effort"] = "none"
+                adjustments += 1
+                log.info("LLM: set reasoning_effort=none, retrying")
+                continue
             match = _UNSUPPORTED_RE.search(message)
             if match and adjustments < 3:
                 param = match.group(1)
