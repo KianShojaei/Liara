@@ -176,7 +176,9 @@ class LiaraClient:
                     method, url, params=query, json=json_body, files=files
                 )
             except httpx.HTTPError as exc:
-                last_error = LiaraUnavailable(mask_text(str(exc)))
+                last_error = LiaraUnavailable(
+                    f"{type(exc).__name__}: {mask_text(str(exc))}".strip(": ")
+                )
                 self._breaker.failure()
                 await self._backoff(attempt)
                 continue

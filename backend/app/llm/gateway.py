@@ -117,17 +117,7 @@ class LLMGateway:
                 *safe_messages[1:],
             ]
 
-        last_error: Exception | None = None
-        for _ in range(MAX_ATTEMPTS):
-            try:
-                response = await self._client.chat.completions.create(**kwargs)
-                break
-            except Exception as exc:  # noqa: BLE001
-                last_error = exc
-                log.warning("LLM call failed: %s", mask_text(str(exc)))
-        else:
-            raise RuntimeError(f"LLM unavailable: {mask_text(str(last_error))}")
-
+        response = await compat_create(self._client, kwargs)
         self.usage.add(getattr(response, "usage", None))
         choice = response.choices[0].message
         turn = ChatTurn(content=choice.content or "", raw=response)
@@ -204,6 +194,41 @@ class LLMGateway:
 
 
 # ------------------------------------------------------------------ helpers
+
+_UNSUPPORTED_RE = re.compile(r"[Uu]nsupported (?:parameter|value)[^'\"]*['\"]([a-z_]+)['\"]")
+_PARAM_FALLBACKS = {"max_tokens": "max_completion_tokens"}
+
+
+async def compat_create(client: Any, kwargs: dict[str, Any]) -> Any:
+    """chat.completions.create that adapts to the provider's parameter support.
+
+    BoxAPI fronts several model families; some reject `max_tokens` (want
+    `max_completion_tokens`) or any non-default `temperature`. On a 400 "Unsupported
+    parameter 'x'" we rename or drop `x` and retry, up to three parameter adjustments,
+    plus one plain retry for transient failures."""
+    attempts = 0
+    adjustments = 0
+    while True:
+        try:
+            return await client.chat.completions.create(**kwargs)
+        except Exception as exc:  # noqa: BLE001
+            message = mask_text(str(exc))
+            match = _UNSUPPORTED_RE.search(message)
+            if match and adjustments < 3:
+                param = match.group(1)
+                adjustments += 1
+                if param in _PARAM_FALLBACKS and param in kwargs:
+                    kwargs[_PARAM_FALLBACKS[param]] = kwargs.pop(param)
+                elif param in kwargs:
+                    kwargs.pop(param)
+                else:
+                    raise RuntimeError(f"LLM rejected request: {message}") from exc
+                log.info("LLM: adjusted unsupported parameter %s, retrying", param)
+                continue
+            attempts += 1
+            if attempts >= MAX_ATTEMPTS:
+                raise RuntimeError(f"LLM unavailable: {message}") from exc
+            log.warning("LLM call failed, retrying: %s", message)
 
 
 def _loads(raw: str | None) -> dict[str, Any]:

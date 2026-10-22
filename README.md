@@ -73,7 +73,7 @@ API لیارا **نمی‌تواند**: حساب را شارژ کند، توکن
 
 ## نحوه‌ی تعامل کاربر
 
-1. **گفتگو به زبان ساده**: «دیپلوی ./my-site»، «وضعیت shop-demo»، «سایت کند شده»، «ری‌استارت»، «FAULT_MODE=none»، «ارتقا به ir-medium-g2»، «دامنه shop.example.ir».
+1. **گفتگو به زبان ساده**: «دیپلوی ./my-site»، «وضعیت shop-demo»، «سایت کند شده»، «ری‌استارت»، «FAULT_MODE=none»، «ارتقا به ir-medium»، «دامنه shop.example.ir».
 2. **کارت‌ها به‌جای متن خام**: تحلیل پروژه، گزینه‌های پلن با هزینه و زمان باقی‌مانده، فرم متغیرها، **کارت تأیید** (اثر هزینه، برگشت‌پذیری، downtime، برنامه‌ی بازگشت)، stepper زنده‌ی دیپلوی، کارت نتیجه‌ی بررسی، کارت شواهد (نمودار حافظه/CPU + یافته‌ها)، کارت فرضیه‌ها با نوار اطمینان، کارت راه‌حل‌ها با ریسک/هزینه، کارت مراحل دستی.
 3. **پنل وضعیت زنده**: موجودی و runway، لیست برنامه‌ها با نقطه‌ی سلامت، sparkline حافظه/CPU، Watcher.
 4. **سطوح ریسک**: T0 خواندن (خودکار) · T1 نوشتن کم‌ریسک (خودکار با اعلان) · T2 نیازمند تأیید (deploy, restart, scale, env, resize, domain) · T3 محافظت‌شده (delete, ssl disable, downgrade؛ پیش‌فرض خاموش + تأیید تایپی).
@@ -90,6 +90,7 @@ make dev-up                     # mock Liara :8081 + demo app :3000 + backend :8
 make frontend                   # http://localhost:5173
 ```
 
+- **ویندوز**: `make` ندارید؛ به‌جای آن `cd backend; uv venv .venv; uv pip install -p .venv\Scripts\python.exe -e ".[dev]"` و سپس از ریشه‌ی مخزن `.\scripts\dev_up.ps1` (هر سرویس در یک پنجره باز می‌شود). پایتون venv در ویندوز `backend\.venv\Scripts\python.exe` است.
 - **حالت mock** (پیش‌فرض): بدون نیاز به توکن؛ `tools/mock_liara` شکل واقعی پاسخ‌ها را از OpenAPI رسمی بازپخش می‌کند و سناریوی خطا دارد:
   `curl -X POST localhost:8081/__mock/scenario -d '{"app":"shop-demo","scenario":"memory_leak","minutes_ago":4}' -H 'content-type: application/json'`
 - **حالت live**: `COPILOT_MODE=live` و توکن در `.env`. اول `python tools/probe.py` را اجرا کنید (فقط GET، خروجی ماسک‌شده) تا فرضیات را تأیید کند. `COPILOT_APP_ALLOWLIST=shop-demo` دسترسی ایجنت را به همان برنامه محدود می‌کند؛ `COPILOT_DRY_RUN=true` اجرا را شبیه‌سازی می‌کند.

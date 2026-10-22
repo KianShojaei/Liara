@@ -2,7 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-html { font-family: 'Vazirmatn', system-ui, sans-serif; }
+/* Self-hosted Vazirmatn (variable weight) so the UI never depends on Google Fonts. */
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/fonts/Vazirmatn[wght].woff2') format('woff2-variations'), url('/fonts/Vazirmatn[wght].woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+html, body, button, input, textarea, select, pre, code, kbd { font-family: 'Vazirmatn', system-ui, sans-serif; }
 body { overflow-x: hidden; }
 
 @layer components {
@@ -13,5 +21,5 @@ body { overflow-x: hidden; }
   .btn-danger { @apply btn bg-rose-600 text-white hover:bg-rose-700; }
   .btn-ghost { @apply btn border border-slate-300 bg-transparent hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800; }
   .input { @apply w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-950; }
-  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; direction: ltr; text-align: left; }
+  .mono { font-family: 'Vazirmatn', system-ui, sans-serif; direction: ltr; text-align: left; font-variant-numeric: tabular-nums; }
 }

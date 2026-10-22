@@ -26,59 +26,62 @@ app = FastAPI(title="Mock Liara API")
 
 SCENARIOS = {"healthy", "memory_leak", "cpu_saturation", "error_burst", "bad_release"}
 
+# Plan ids, resources and hourly prices VERIFIED against a real account via tools/probe.py
+# (October 2026). "ir-large" is an extrapolated placeholder for upgrade demos.
 PLAN_CATALOG: dict[str, dict[str, Any]] = {
     "free": {
-        "available": True,
+        "available": False,
+        "region": "iran",
+        "RAM": {"amount": 0.125},
+        "CPU": {"amount": 0.125},
+        "volume": 0,
+        "price": 0,
+        "storageClass": None,
+    },
+    "ir-mini": {
+        "available": False,
         "region": "iran",
         "RAM": {"amount": 0.25},
-        "CPU": {"amount": 0.5},
-        "volume": 0.5,
-        "price": 0,
+        "CPU": {"amount": 0.25},
+        "volume": 2.5,
+        "price": 763.88,
         "storageClass": "SSD",
     },
-    "ir-small-g2": {
+    "ir-small": {
         "available": True,
         "region": "iran",
         "RAM": {"amount": 0.5},
-        "CPU": {"amount": 1},
-        "volume": 1,
-        "price": 208,
+        "CPU": {"amount": 0.5},
+        "volume": 5,
+        "price": 1319.44,
         "storageClass": "SSD",
     },
-    "ir-medium-g2": {
+    "ir-medium": {
         "available": True,
         "region": "iran",
         "RAM": {"amount": 1},
         "CPU": {"amount": 1},
-        "volume": 2,
-        "price": 416,
+        "volume": 10,
+        "price": 2291.66,
         "storageClass": "SSD",
     },
-    "ir-large-g2": {
+    "ir-large": {
         "available": True,
         "region": "iran",
         "RAM": {"amount": 2},
         "CPU": {"amount": 2},
-        "volume": 4,
-        "price": 833,
+        "volume": 20,
+        "price": 4583.33,
         "storageClass": "SSD",
     },
-    "ir-xlarge-g2": {
-        "available": True,
-        "region": "iran",
-        "RAM": {"amount": 4},
-        "CPU": {"amount": 4},
-        "volume": 8,
-        "price": 1666,
-        "storageClass": "SSD",
-    },
-    "ir-small-g1": {
+    "small": {
         "available": False,
-        "region": "iran",
+        "region": "germany",
         "RAM": {"amount": 0.5},
-        "CPU": {"amount": 1},
-        "volume": 1,
-        "price": 150,
+        "CPU": {"amount": 0.25},
+        "volume": 2.5,
+        "price": 100,
+        "storageClass": "NVMe",
     },
 }
 
@@ -94,7 +97,7 @@ class MockState:
         self.reset()
 
     def reset(self) -> None:
-        self.balance = 120_000.0
+        self.balance = 999_553.0
         self.projects: dict[str, dict[str, Any]] = {}
         self.releases: dict[str, dict[str, Any]] = {}
         self.domains: dict[str, dict[str, Any]] = {}
@@ -105,7 +108,7 @@ class MockState:
         self._seed()
 
     def _seed(self) -> None:
-        self.add_project("shop-demo", "node", "ir-small-g2", deployed=True)
+        self.add_project("shop-demo", "node", "ir-small", deployed=True)
         self.add_release("shop-demo", "READY", "v1", message="v1 initial release", age=3600)
 
     def add_project(

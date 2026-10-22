@@ -56,18 +56,26 @@ def _load_env() -> None:
 
 
 async def bench(client, model: str) -> dict[str, object]:  # type: ignore[no-untyped-def]
+    from app.llm.gateway import compat_create
+
     row: dict[str, object] = {"model": model}
     # 1. tool calling
     t = time.perf_counter()
     try:
-        r = await client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "user", "content": "Show me the last 5 minutes of logs for app shop-demo"}
-            ],
-            tools=[TOOL],
-            temperature=0,
-            max_tokens=200,
+        r = await compat_create(
+            client,
+            dict(
+                model=model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": "Show me the last 5 minutes of logs for app shop-demo",
+                    }
+                ],
+                tools=[TOOL],
+                temperature=0,
+                max_tokens=200,
+            ),
         )
         calls = r.choices[0].message.tool_calls or []
         row["tool_call"] = (
@@ -77,15 +85,18 @@ async def bench(client, model: str) -> dict[str, object]:  # type: ignore[no-unt
         )
         row["tool_latency_s"] = round(time.perf_counter() - t, 2)
     except Exception as exc:  # noqa: BLE001
-        row["tool_call"], row["tool_error"] = False, str(exc)[:80]
+        row["tool_call"], row["tool_error"] = False, str(exc)[:300]
     # 2. JSON output
     t = time.perf_counter()
     try:
-        r = await client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": SCHEMA_PROMPT}],
-            temperature=0,
-            max_tokens=120,
+        r = await compat_create(
+            client,
+            dict(
+                model=model,
+                messages=[{"role": "user", "content": SCHEMA_PROMPT}],
+                temperature=0,
+                max_tokens=120,
+            ),
         )
         text = r.choices[0].message.content or ""
         start, end = text.find("{"), text.rfind("}")
@@ -93,38 +104,44 @@ async def bench(client, model: str) -> dict[str, object]:  # type: ignore[no-unt
         row["json"] = parsed.get("intent") == "investigate" and parsed.get("app") == "shop-demo"
         row["json_latency_s"] = round(time.perf_counter() - t, 2)
     except Exception as exc:  # noqa: BLE001
-        row["json"], row["json_error"] = False, str(exc)[:80]
+        row["json"], row["json_error"] = False, str(exc)[:300]
     # 3. streaming
     try:
         chunks = 0
-        async for _ in await client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": "Count from 1 to 5."}],
-            stream=True,
-            max_tokens=40,
+        async for _ in await compat_create(
+            client,
+            dict(
+                model=model,
+                messages=[{"role": "user", "content": "Count from 1 to 5."}],
+                stream=True,
+                max_tokens=40,
+            ),
         ):
             chunks += 1
         row["streaming"] = chunks > 1
     except Exception as exc:  # noqa: BLE001
-        row["streaming"], row["stream_error"] = False, str(exc)[:60]
+        row["streaming"], row["stream_error"] = False, str(exc)[:300]
     # 4. Persian quality (manual read)
     try:
-        r = await client.chat.completions.create(
-            model=model,
-            messages=[
-                {
-                    "role": "user",
-                    "content": "در دو جمله‌ی ساده به صاحب یک سایت توضیح بده نشت حافظه یعنی چه.",
-                }
-            ],
-            temperature=0.3,
-            max_tokens=120,
+        r = await compat_create(
+            client,
+            dict(
+                model=model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": "در دو جمله‌ی ساده به صاحب یک سایت توضیح بده نشت حافظه یعنی چه.",
+                    }
+                ],
+                temperature=0.3,
+                max_tokens=120,
+            ),
         )
         row["persian_sample"] = (
             (r.choices[0].message.content or "").strip().replace("\n", " ")[:140]
         )
     except Exception as exc:  # noqa: BLE001
-        row["persian_sample"] = f"error: {str(exc)[:60]}"
+        row["persian_sample"] = f"error: {str(exc)[:300]}"
     return row
 
 

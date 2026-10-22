@@ -39,7 +39,7 @@ def _load_env() -> None:
 
 def section(title: str, body: object) -> None:
     print(f"\n### {title}")
-    print(json.dumps(mask_obj(body), ensure_ascii=False, indent=2, default=str)[:4000])
+    print(json.dumps(mask_obj(body), ensure_ascii=False, indent=2, default=str)[:12000])
 
 
 async def main() -> int:
@@ -121,7 +121,14 @@ async def main() -> int:
                 zones = await client.dns_zones()
                 section("dns zones", [z.model_dump(by_alias=False) for z in zones])
             except LiaraError as exc:
-                section("dns zones", {"error": exc.message})
+                section(
+                    "dns zones",
+                    {
+                        "error": exc.message,
+                        "status": exc.status,
+                        "note": "dns-service may need LIARA_TEAM_ID or a different host; see docs/LIMITATIONS.md",
+                    },
+                )
             break
         except LiaraError as exc:
             section(f"base {base}", {"error": exc.message, "status": exc.status})

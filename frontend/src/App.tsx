@@ -5,6 +5,7 @@ import { AuditPanel, IncidentsPanel, LimitationsPanel, PolicyPanel } from './com
 import { Sidebar } from './components/Sidebar'
 import { Timeline } from './components/Timeline'
 import { useSession } from './hooks/useSession'
+import { applyTheme, savedTheme, type Theme } from './theme'
 import type { Incident, Status } from './types'
 
 type View = 'chat' | 'incidents' | 'audit' | 'limitations' | 'policy'
@@ -18,6 +19,12 @@ const VIEWS: { id: View; label: string }[] = [
 
 export default function App() {
   const { sessionId, events, connected, samples, newSession, send } = useSession()
+  const [theme, setTheme] = useState<Theme>(savedTheme)
+  const toggleTheme = () => {
+    const next: Theme = theme === 'dark' ? 'light' : 'dark'
+    applyTheme(next)
+    setTheme(next)
+  }
   const [status, setStatus] = useState<Status | null>(null)
   const [incidents, setIncidents] = useState<Incident[]>([])
   const [selectedApp, setSelectedApp] = useState<string | null>(null)
@@ -70,6 +77,7 @@ export default function App() {
           ))}
         </nav>
         <button className="btn-ghost mr-auto whitespace-nowrap text-xs sm:mr-0" onClick={() => newSession()}>+ گفتگوی جدید</button>
+        <button className="btn-ghost whitespace-nowrap text-xs" title="تغییر تم" onClick={toggleTheme}>{theme === 'dark' ? '☀️ روشن' : '🌙 تاریک'}</button>
         <button className="btn-ghost whitespace-nowrap text-xs lg:hidden" onClick={() => setSidebarOpen(!sidebarOpen)}>وضعیت</button>
       </header>
 
