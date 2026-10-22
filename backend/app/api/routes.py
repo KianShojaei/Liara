@@ -235,7 +235,19 @@ async def status(request: Request) -> dict[str, Any]:
             rt.client.list_projects(), rt.client.billing(), rt.client.me()
         )
     except LiaraError as exc:
-        return {"ok": False, "error": exc.user_message, "mode": rt.settings.copilot_mode}
+        return {
+            "ok": False,
+            "error": exc.user_message,
+            "mode": rt.settings.copilot_mode,
+            "llm": rt.llm.available,
+            "balance": 0,
+            "hourly_burn": 0,
+            "runway_hours": None,
+            "runway_label": "—",
+            "apps": [],
+            "watcher": rt.watcher.status() if rt.watcher else {"running": False},
+            "circuit_open": rt.client.circuit_open,
+        }
     allow = rt.settings.app_allowlist
     prices = {p.plan_id: p.price for p in me.project_plans()}
     burn = sum(prices.get(a.plan_id, 0.0) for a in apps if a.scale)

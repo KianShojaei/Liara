@@ -49,7 +49,7 @@ export default function App() {
   }, [events, refresh])
 
   useEffect(() => {
-    if (!selectedApp && status?.apps.length) setSelectedApp(status.apps[0].name)
+    if (!selectedApp && status?.apps?.length) setSelectedApp(status.apps[0].name)
   }, [status, selectedApp])
 
   const sessionApp = useMemo(() => {

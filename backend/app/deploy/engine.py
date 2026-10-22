@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import io
 import logging
+import os
 import shutil
 import tarfile
 import tempfile
@@ -144,13 +145,18 @@ class DeployEngine:
             await _maybe_await(emit(f"Release created (releaseID={release_id[:8]}…), building…"))
             return {"method": "api", "release_id": release_id, "source_id": source_id}
         finally:
-            archive.unlink(missing_ok=True)
+            try:
+                archive.unlink(missing_ok=True)
+            except OSError as exc:  # never fail a finished deploy over a temp file
+                log.warning("could not remove temp archive %s: %s", archive, exc)
 
     @staticmethod
     def _pack(project: Path) -> Path:
         if not project.is_dir():
             raise FileNotFoundError(project)
-        target = Path(tempfile.mkstemp(suffix=".tar.gz")[1])
+        fd, name = tempfile.mkstemp(suffix=".tar.gz")
+        os.close(fd)  # Windows: an open descriptor would block tarfile writes and the later unlink
+        target = Path(name)
         total = 0
         with tarfile.open(target, "w:gz") as tar:
             for file in project.rglob("*"):
