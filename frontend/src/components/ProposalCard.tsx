@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { api } from '../api'
-import { DOWNTIME, PROPOSAL_STATUS, REVERSIBILITY, TIER, signed } from '../format'
+import { DOWNTIME, PROPOSAL_STATUS, REVERSIBILITY, RISK, TIER, signed } from '../format'
 import type { Proposal } from '../types'
 import { Chip, Card } from './ui'
 
@@ -57,7 +57,7 @@ export function ProposalCard({ proposal }: { proposal: Proposal }) {
         <Chip>{REVERSIBILITY[impact.reversibility] ?? impact.reversibility}</Chip>
         <Chip>{DOWNTIME[impact.downtime] ?? impact.downtime}</Chip>
         {(impact.notes ?? []).filter(Boolean).map((n) => (
-          <Chip key={n}>{n}</Chip>
+          <Chip key={n}>{n.replace(/^risk:\s*(low|medium|high)$/i, (_m, r) => RISK[r.toLowerCase()] ?? n)}</Chip>
         ))}
       </div>
       {impact.rollback_plan && <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">↩️ بازگشت: {impact.rollback_plan}</div>}
