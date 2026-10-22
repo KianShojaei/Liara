@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { PLATFORM, num, toman } from '../format'
 import { Button, Card, Chip, Ltr } from './ui'
@@ -79,8 +79,25 @@ export function PlanOptionsCard({ p, sessionId }: { p: Record<string, any>; sess
 
 export function EnvFormCard({ p, sessionId }: { p: Record<string, any>; sessionId: string }) {
   const [values, setValues] = useState<Record<string, string>>(() => Object.fromEntries((p.keys as string[]).map((k) => [k, ''])))
+  const [sources, setSources] = useState<Record<string, string>>({})
   const [done, setDone] = useState(false)
   const [busy, setBusy] = useState(false)
+  // Prefill from the project's .env / .env.example; the user edits or just confirms.
+  useEffect(() => {
+    let alive = true
+    api
+      .wizardEnvDefaults(sessionId)
+      .then((d) => {
+        if (!alive) return
+        setValues((v) => ({ ...v, ...Object.fromEntries(Object.entries(d.values).filter(([, val]) => val !== '')) }))
+        setSources(d.sources)
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [sessionId])
+  const prefilled = Object.values(sources).filter(Boolean).length
   const submit = async () => {
     setBusy(true)
     try {
@@ -93,17 +110,19 @@ export function EnvFormCard({ p, sessionId }: { p: Record<string, any>; sessionI
   return (
     <Card title="متغیرهای محیطی" icon="🔐" meta={done ? <Chip tone="success">ثبت شد</Chip> : undefined}>
       <p className="text-sm text-muted">{p.text}</p>
+      {prefilled > 0 && !done && <p className="mt-1 text-xs text-emerald-500">{prefilled} مقدار از فایل‌های .env پروژه خوانده شد؛ در صورت نیاز ویرایش کنید و «تأیید و ادامه» را بزنید.</p>}
       <div className="mt-3 space-y-2">
         {(p.keys as string[]).map((k) => (
           <label key={k} className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:gap-2">
             <Ltr className="w-44 shrink-0 text-xs">{k}</Ltr>
             <input className="input" dir="ltr" disabled={done} type={(p.secret_keys as string[]).includes(k) ? 'password' : 'text'} value={values[k]} onChange={(e) => setValues({ ...values, [k]: e.target.value })} placeholder="خالی = تنظیم نشود" />
+            {sources[k] && <span className="shrink-0 text-[11px] text-muted" dir="ltr">{sources[k]}</span>}
           </label>
         ))}
       </div>
       {!done ? (
         <Button variant="primary" className="mt-3" loading={busy} onClick={submit}>
-          ادامه
+          {prefilled > 0 ? 'تأیید و ادامه' : 'ادامه'}
         </Button>
       ) : (
         <div className="mt-2 text-xs text-emerald-500">ثبت شد؛ کارت تأیید در ادامه می‌آید.</div>

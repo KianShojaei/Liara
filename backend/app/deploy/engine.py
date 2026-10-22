@@ -20,6 +20,7 @@ from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
+from app.deploy.analyzer import ProjectAnalyzer
 from app.liara.client import LiaraClient
 from app.liara.redaction import mask_text
 
@@ -80,7 +81,7 @@ class DeployEngine:
         await _maybe_await(
             emit("CLI not available or mock mode: using the raw API (sources + releases).")
         )
-        return await self._deploy_with_api(project_path, app, port, platform, emit)
+        return await self._deploy_with_api(project_path, app, port, platform, emit, message)
 
     # ------------------------------------------------------------------ CLI
 
@@ -134,14 +135,24 @@ class DeployEngine:
     # ------------------------------------------------------------------ API
 
     async def _deploy_with_api(
-        self, project_path: str, app: str, port: int, platform: str, emit: LineSink
+        self,
+        project_path: str,
+        app: str,
+        port: int,
+        platform: str,
+        emit: LineSink,
+        message: str = "",
     ) -> dict[str, Any]:
         archive = await asyncio.to_thread(self._pack, Path(project_path))
         try:
             await _maybe_await(emit(f"Packed sources: {archive.stat().st_size // 1024} KB"))
             source_id = await self._client.upload_source(app, archive)
             await _maybe_await(emit(f"Source uploaded (sourceID={source_id[:8]}…)"))
-            release_id = await self._client.create_release(app, source_id, port, platform)
+            version = ProjectAnalyzer(project_path).platform_version()
+            platform_config = {"version": version} if version else {}
+            release_id = await self._client.create_release(
+                app, source_id, port, platform, message=message, platform_config=platform_config
+            )
             await _maybe_await(emit(f"Release created (releaseID={release_id[:8]}…), building…"))
             return {"method": "api", "release_id": release_id, "source_id": source_id}
         finally:

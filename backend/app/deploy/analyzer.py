@@ -173,6 +173,47 @@ class ProjectAnalyzer:
 
     # --------------------------------------------------------------- envs
 
+    def env_defaults(self) -> tuple[dict[str, str], dict[str, str]]:
+        """Values to prefill the env form: .env first (real values), then .env.example
+        defaults. Returned to the UI on demand only; never written to the timeline."""
+        values: dict[str, str] = {}
+        sources: dict[str, str] = {}
+        for name in (".env.example", ".env.sample", ".env.template", ".env.local", ".env"):
+            file = self.path / name
+            if not file.exists():
+                continue
+            for line in file.read_text(errors="ignore").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = (part.strip() for part in line.split("=", 1))
+                value = value.strip("'\"")
+                if value or key not in values:
+                    values[key], sources[key] = value, name
+        return values, sources
+
+    def platform_version(self) -> str | None:
+        """Runtime version hint (node major from package.json engines / .nvmrc; python from
+        runtime.txt or .python-version), mirroring the CLI's get-platform-version."""
+        pkg = (
+            self._json(self.path / "package.json") if (self.path / "package.json").exists() else {}
+        )
+        node = str((pkg.get("engines") or {}).get("node", ""))
+        match = re.search(r"(\d+)", node)
+        if match:
+            return match.group(1)
+        for name in (".nvmrc", ".node-version"):
+            if (self.path / name).exists():
+                match = re.search(r"(\d+)", (self.path / name).read_text(errors="ignore"))
+                if match:
+                    return match.group(1)
+        for name in ("runtime.txt", ".python-version"):
+            if (self.path / name).exists():
+                match = re.search(r"(\d+\.\d+)", (self.path / name).read_text(errors="ignore"))
+                if match:
+                    return match.group(1)
+        return None
+
     def _detect_envs(self, a: ProjectAnalysis) -> None:
         keys: list[str] = []
         for name in (".env.example", ".env.sample", ".env.template"):

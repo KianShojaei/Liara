@@ -186,6 +186,23 @@ async def wizard_start(session_id: str, body: WizardStart, request: Request) -> 
     return {"accepted": True}
 
 
+@router.get("/sessions/{session_id}/wizard/env-defaults")
+async def wizard_env_defaults(session_id: str, request: Request) -> dict[str, Any]:
+    """Prefill values read from the project's .env / .env.example. Served on demand only and
+    never written to the timeline or audit, so secrets stay out of the local DB."""
+    from app.deploy.analyzer import ProjectAnalyzer
+
+    state = _agent(request).wizard.state(session_id)
+    if state is None:
+        raise HTTPException(404, "no deploy wizard in this session")
+    values, sources = await asyncio.to_thread(ProjectAnalyzer(state.project_path).env_defaults)
+    keys = state.analysis.env_keys if state.analysis else list(values)
+    return {
+        "values": {k: values.get(k, "") for k in keys},
+        "sources": {k: sources.get(k, "") for k in keys},
+    }
+
+
 @router.post("/sessions/{session_id}/wizard/env")
 async def wizard_env(session_id: str, body: WizardEnv, request: Request) -> dict[str, Any]:
     state = await _agent(request).wizard.provide_env(session_id, body.values)

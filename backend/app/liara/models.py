@@ -58,6 +58,17 @@ class Me(_Loose):
     plans: dict[str, Any] = Field(default_factory=dict)
     feature_flags: list[dict[str, Any]] = Field(default_factory=list, alias="featureFlags")
 
+    def bundle_plan_for(self, plan_id: str) -> str | None:
+        """Cheapest available feature-bundle plan for a compute plan
+        (plans.projectBundlePlans[planID] = {bundleKey: {available, displayPrice}}; VERIFIED CLI)."""
+        bundles = (self.plans.get("projectBundlePlans") or {}).get(plan_id) or {}
+        candidates = [
+            (float(v.get("displayPrice") or 0), k)
+            for k, v in bundles.items()
+            if isinstance(v, dict) and v.get("available", True)
+        ]
+        return min(candidates)[1] if candidates else None
+
     def project_plans(self) -> list[ProjectPlan]:
         raw = self.plans.get("projects", {}) or {}
         plans: list[ProjectPlan] = []

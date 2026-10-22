@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any
 from app.deploy.advisor import PlanAdvice, PlanAdvisor
 from app.deploy.analyzer import ProjectAnalysis, ProjectAnalyzer
 from app.deploy.liara_json import build_liara_json, write_liara_json
-from app.liara.errors import LiaraError, LiaraNotFound
+from app.liara.errors import LiaraConflict, LiaraError, LiaraNotFound
 from app.policy.proposals import Impact
 
 if TYPE_CHECKING:
@@ -246,7 +246,16 @@ class DeployWizard:
 
         if args.get("create"):
             step("create_app", "running", f"plan {args['plan_id']}")
-            await rt.client.create_project(app, args["plan_id"], args["platform"])
+            me = await rt.client.me()
+            bundle = me.bundle_plan_for(args["plan_id"])
+            try:
+                await rt.client.create_project(
+                    app, args["plan_id"], args["platform"], bundle_plan_id=bundle
+                )
+            except LiaraConflict:
+                raise RuntimeError(
+                    f"نام «{app}» قبلاً در لیارا گرفته شده است؛ یک نام یکتا انتخاب کنید و دوباره دیپلوی را شروع کنید."
+                ) from None
             step("create_app", "done", rt.probe.url_for(app))
         if args.get("variables"):
             step("set_env", "running", ", ".join(sorted(args["variables"])))

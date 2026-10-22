@@ -57,6 +57,7 @@ export const api = {
     post<Proposal>(`/api/proposals/${id}/approve`, body),
   reject: (id: string, reason = '') => post<Proposal>(`/api/proposals/${id}/reject`, { reason }),
   wizardEnv: (id: string, values: Record<string, string>) => post(`/api/sessions/${id}/wizard/env`, { values }),
+  wizardEnvDefaults: (id: string) => get<{ values: Record<string, string>; sources: Record<string, string> }>(`/api/sessions/${id}/wizard/env-defaults`),
   wizardPlan: (id: string, plan_id: string) => post(`/api/sessions/${id}/wizard/plan`, { plan_id }),
   wizardResume: (id: string) => post(`/api/sessions/${id}/wizard/resume`),
   manualStepDone: (session_id: string, limitation_id: string, context: Record<string, any>) =>

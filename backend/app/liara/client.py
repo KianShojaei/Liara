@@ -272,13 +272,18 @@ class LiaraClient:
         *,
         read_only_root_fs: bool = False,
         network: str | None = None,
+        bundle_plan_id: str | None = None,
     ) -> dict[str, Any]:
+        # VERIFIED body from the official CLI (app/create.ts): the feature bundle plan
+        # (`bundlePlanID`, from plans.projectBundlePlans[planID]) is sent alongside planID.
         payload: dict[str, Any] = {
             "name": name,
             "planID": plan_id,
             "platform": platform,
             "readOnlyRootFilesystem": read_only_root_fs,
         }
+        if bundle_plan_id:
+            payload["bundlePlanID"] = bundle_plan_id
         if network:
             payload["network"] = network
         return await self._post("/v1/projects", json_body=payload)
@@ -317,11 +322,29 @@ class LiaraClient:
             )
         return str(body.get("sourceID", ""))
 
-    async def create_release(self, name: str, source_id: str, port: int, platform: str) -> str:
-        body = await self._post(
-            f"/v2/projects/{name}/releases",
-            json_body={"sourceID": source_id, "port": port, "type": platform},
-        )
+    async def create_release(
+        self,
+        name: str,
+        source_id: str,
+        port: int,
+        platform: str,
+        *,
+        message: str = "",
+        platform_config: dict[str, Any] | None = None,
+        build_location: str = "iran",
+    ) -> str:
+        # VERIFIED body shape from the official CLI (deploy.ts): build.location, port, type,
+        # message, platformConfig (e.g. {"version": "20"} for node), sourceID.
+        payload: dict[str, Any] = {
+            "sourceID": source_id,
+            "port": port,
+            "type": platform,
+            "build": {"location": build_location, "cache": True},
+            "platformConfig": platform_config or {},
+        }
+        if message:
+            payload["message"] = message
+        body = await self._post(f"/v2/projects/{name}/releases", json_body=payload)
         return str(body.get("releaseID", ""))
 
     async def get_release(self, release_id: str) -> Release:

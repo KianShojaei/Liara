@@ -238,7 +238,13 @@ def me() -> dict[str, Any]:
         "plans": {
             "projects": PLAN_CATALOG,
             "databases": {},
-            "projectBundlePlans": {"free": {}, "standard": {}},
+            "projectBundlePlans": {
+                pid: {
+                    "free": {"available": True, "displayPrice": 0},
+                    "standard": {"available": True, "displayPrice": 150000},
+                }
+                for pid in PLAN_CATALOG
+            },
         },
     }
 
