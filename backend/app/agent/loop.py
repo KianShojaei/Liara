@@ -10,6 +10,7 @@ Order of precedence:
 from __future__ import annotations
 
 import json
+import logging
 import re
 from typing import TYPE_CHECKING, Any
 
@@ -17,7 +18,7 @@ from pydantic import BaseModel, Field
 
 from app.deploy.wizard import DeployWizard
 from app.liara.errors import LiaraError
-from app.liara.redaction import mask_obj
+from app.liara.redaction import mask_obj, mask_text
 from app.llm.prompts import ROUTER_PROMPT, SYSTEM_PROMPT
 from app.policy.proposals import Impact
 from app.policy.tiers import Tier, all_specs
@@ -25,6 +26,8 @@ from app.sre.investigator import Investigator
 
 if TYPE_CHECKING:
     from app.agent.context import Runtime
+
+log = logging.getLogger("copilot.agent")
 
 MAX_TOOL_ROUNDS = 6
 
@@ -56,6 +59,39 @@ KEYWORDS: dict[str, tuple[str, ...]] = {
     "scale_on": ("روشن", "turn on", "start app"),
     "docs": ("چطور", "how do", "راهنما", "مستندات"),
 }
+
+
+_CONVERSATIONAL = (
+    "سلام",
+    "درود",
+    "ممنون",
+    "مرسی",
+    "چی هستی",
+    "کی هستی",
+    "چطور",
+    "چگونه",
+    "راهنما",
+    "کمک",
+    "میتونم",
+    "می‌توانم",
+    "میشه",
+    "می‌شه",
+    "آپلود",
+    "اپلود",
+    "upload",
+    "hello",
+    "hi",
+    "help",
+    "how",
+    "what",
+    "?",
+    "؟",
+)
+
+
+def _looks_conversational(text: str) -> bool:
+    lower = text.lower().strip()
+    return len(lower) < 200 and any(w in lower for w in _CONVERSATIONAL)
 
 
 class RouteResult(BaseModel):
@@ -114,6 +150,13 @@ class Agent:
             rt.emit(session_id, "error", {"text": exc.user_message})
         except PermissionError as exc:
             rt.emit(session_id, "error", {"text": f"این عملیات مجاز نیست: {exc}"})
+        except Exception as exc:  # noqa: BLE001 - a background task must never fail silently
+            log.exception("agent dispatch failed")
+            rt.emit(
+                session_id,
+                "error",
+                {"text": "پاسخ‌دهی با خطا مواجه شد: " + mask_text(str(exc))[:300]},
+            )
 
     # ---------------------------------------------------------- routing
 
@@ -322,9 +365,43 @@ class Agent:
                 )
                 return
 
+        if intent in ("smalltalk", "other", "help", "docs") and _looks_conversational(text):
+            if rt.llm.available:
+                try:
+                    say(await self._plain_reply(session_id, text, route))
+                    return
+                except Exception as exc:  # noqa: BLE001 - fall back to the static help text
+                    log.warning("plain reply failed: %s", mask_text(str(exc)))
+            say(self._capabilities_text())
+            return
+
         if rt.llm.available:
             return await self._tool_loop(session_id, text, route)
         say(self._capabilities_text())
+
+    async def _plain_reply(self, session_id: str, text: str, route: RouteResult) -> str:
+        """Answer greetings, questions and how-to requests without tool calling."""
+        rt = self._rt
+        history = [m["payload"] for m in rt.store.timeline(session_id) if m["kind"] == "message"][
+            -10:
+        ]
+        messages: list[dict[str, Any]] = [
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT
+                + "\nYou are answering a conversational message. Explain what you can do and how to do it in THIS app: "
+                "projects tab (upload zip/tar.gz, Git URL or local folder, then «شروع دیپلوی»), chat commands "
+                "(«وضعیت <app>», «سایت کند شده», «ری‌استارت <app>», «KEY=value», «ارتقا به <plan>», «دامنه <name>»), "
+                "incidents tab, and that sensitive actions always wait for the user's approval card. "
+                f"Current app: {route.app or 'none'}. Keep it to a few short sentences.",
+            }
+        ]
+        messages += [
+            {"role": m["role"], "content": m["text"]} for m in history[:-1] if m.get("text")
+        ]
+        messages.append({"role": "user", "content": text})
+        turn = await rt.llm.chat(messages, role="small", max_tokens=400)
+        return turn.content.strip() or self._capabilities_text()
 
     async def _list_apps(self, session_id: str) -> None:
         result = await self._rt.proposals.run_auto(session_id, "list_apps", {})
@@ -583,14 +660,18 @@ class Agent:
             "reasons": decision.reasons,
         }
 
-    @staticmethod
-    def _capabilities_text() -> str:
+    def _capabilities_text(self) -> str:
         return (
             "می‌توانم این کارها را انجام دهم:\n"
+            "- آپلود یا کلون پروژه از تب «پروژه‌ها» (zip/tar.gz، آدرس Git یا پوشه‌ی محلی) و دیپلوی با یک دکمه\n"
             "- «دیپلوی ./مسیر-پروژه» — بررسی پروژه، پیشنهاد پلن و دیپلوی با تأیید شما\n"
             "- «وضعیت <برنامه>» — سلامت، آدرس و منابع\n"
             "- «سایت کند شده» یا «خطا می‌دهد» — بررسی لاگ‌ها و متریک‌ها و پیشنهاد راه‌حل\n"
             "- «ری‌استارت <برنامه>»، «KEY=value»، «ارتقا به medium-g2»، «دامنه example.ir»\n"
             "- «موجودی» — موجودی و قیمت پلن‌ها\n"
-            "(کلید LLM تنظیم نشده؛ پاسخ‌های آزاد در دسترس نیست ولی همه‌ی عملیات بالا کار می‌کند.)"
+            + (
+                ""
+                if self._rt.llm.available
+                else "(کلید LLM تنظیم نشده؛ پاسخ‌های آزاد در دسترس نیست ولی همه‌ی عملیات بالا کار می‌کند.)"
+            )
         )
