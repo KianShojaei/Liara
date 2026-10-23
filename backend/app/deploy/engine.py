@@ -193,6 +193,10 @@ class DeployEngine:
         previous sourceID is ASSUMED -> the verifier confirms the outcome either way."""
         emit = emit or (lambda _l: None)
         release = await self._client.get_release(release_id)
+        if not release.source_id:
+            # VERIFIED (probe): the list endpoint includes sourceID while the by-id one may not
+            listed = await self._client.releases(app, count=20)
+            release = next((r for r in listed.releases if r.id == release_id), release)
         if not release.source_available:
             raise RuntimeError(
                 "source of that release is no longer available; redeploy from the project folder instead"

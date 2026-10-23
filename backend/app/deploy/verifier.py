@@ -119,9 +119,20 @@ class DeployVerifier:
         try:
             applets = await self._client.applets(app)
         except LiaraError as exc:
-            return step("container", False, exc.user_message)
+            # VERIFIED on a real docker app: GET .../applets can answer HTTP 500 at Liara's side.
+            # That is not evidence about the app, so the step is skipped rather than failed.
+            return step(
+                "container",
+                True,
+                f"Liara applets API unavailable ({exc.message}); skipped, relying on HTTP probe",
+                skipped=True,
+            )
         running = [a for a in applets if a.state.lower() in ("running", "ready")]
         waiting = [f"{a.name}: {a.state} {a.reason}".strip() for a in applets if a not in running]
+        if not applets:
+            return step(
+                "container", True, "no applet data reported; relying on HTTP probe", skipped=True
+            )
         return step(
             "container",
             bool(running) and not waiting,

@@ -114,12 +114,22 @@ async def main() -> int:
             )
             section("raw plan keys", raw_plan_keys)
             billing = await client.billing()
-            section("billing", billing.model_dump())
+            section(
+                "billing",
+                {
+                    **billing.model_dump(),
+                    "team_balance": me.team_balance,
+                    "effective_balance": await client.account_balance(me),
+                },
+            )
             apps = await client.list_projects()
             section("apps", [a.model_dump(by_alias=False) for a in apps])
             target = args.app or (apps[0].name if apps else "")
             if target:
-                await probe_app(client, target)
+                try:
+                    await probe_app(client, target)
+                except LiaraError as exc:
+                    section(f"app probe {target}", {"error": exc.message, "status": exc.status})
             try:
                 zones = await client.dns_zones()
                 section("dns zones", [z.model_dump(by_alias=False) for z in zones])
@@ -217,8 +227,18 @@ async def probe_app(client: LiaraClient, app: str) -> None:
             )
         except LiaraError as exc:
             section("release by id", {"error": exc.message, "status": exc.status})
-    applets = await client.applets(app)
-    section("applets", [a.model_dump() for a in applets])
+    try:
+        applets = await client.applets(app)
+        section("applets", [a.model_dump() for a in applets])
+    except LiaraError as exc:
+        section(
+            "applets",
+            {
+                "error": exc.message,
+                "status": exc.status,
+                "note": "non-fatal; the copilot skips this check",
+            },
+        )
     events = await client.events(app, start=now - 3600, end=now)
     section("events", {"rows": len(events), "sample": [v for r in events for v in r.values][:5]})
     domains = await client.domains(app)

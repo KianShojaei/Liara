@@ -29,8 +29,8 @@ class Settings(BaseSettings):
     # LLM
     boxapi_api_key: str = ""
     llm_base_url: str = "https://ai.boxapi.ir/ai/v1"
-    llm_strong_model: str = "gpt-6-astra"
-    llm_small_model: str = "gpt-5-mini"
+    llm_strong_model: str = "gpt-6-luna"
+    llm_small_model: str = "gpt-5.4-mini"
     llm_embedding_model: str = "text-embedding-3-small"
     llm_action_protocol: Literal["tools", "json"] = "tools"
     llm_timeout_seconds: float = 60.0
