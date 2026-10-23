@@ -1,3 +1,4 @@
+import { AlertIcon, CheckIcon, CopyIcon, CreditCardIcon, HandIcon, LockIcon, SearchIcon } from './icons'
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { PLATFORM, num, toman } from '../format'
@@ -5,7 +6,7 @@ import { Button, Card, Chip, Ltr } from './ui'
 
 export function AnalysisCard({ p }: { p: Record<string, any> }) {
   return (
-    <Card title="نتیجه‌ی بررسی پروژه" icon="🔍" tone="info">
+    <Card title="نتیجه‌ی بررسی پروژه" icon={<SearchIcon size={18} />} tone="info">
       <p className="text-sm">{p.explanation}</p>
       <div className="mt-3 flex flex-wrap gap-1.5">
         <Chip tone="info">پلتفرم: {PLATFORM[p.platform] ?? p.platform}</Chip>
@@ -19,7 +20,7 @@ export function AnalysisCard({ p }: { p: Record<string, any> }) {
       {(p.warnings ?? []).length > 0 && (
         <ul className="mt-2 space-y-0.5 text-xs text-amber-400">
           {p.warnings.map((w: string) => (
-            <li key={w}>⚠ {w}</li>
+            <li key={w} className="flex items-start gap-1"><AlertIcon size={13} className="mt-1 shrink-0 text-amber-400" /> <span>{w}</span></li>
           ))}
         </ul>
       )}
@@ -44,7 +45,7 @@ export function PlanOptionsCard({ p, sessionId }: { p: Record<string, any>; sess
   const [showAll, setShowAll] = useState(false)
   const list = showAll ? options : fitting.slice(0, 4)
   return (
-    <Card title={`انتخاب پلن برای ${p.app_name}`} icon="💳" tone={p.balance_ok ? 'default' : 'warning'} meta={<Chip tone={p.low_balance || !p.balance_ok ? 'warning' : 'success'}>موجودی {toman(p.balance)}</Chip>}>
+    <Card title={`انتخاب پلن برای ${p.app_name}`} icon={<CreditCardIcon size={18} />} tone={p.balance_ok ? 'default' : 'warning'} meta={<Chip tone={p.low_balance || !p.balance_ok ? 'warning' : 'success'}>موجودی {toman(p.balance)}</Chip>}>
       <p className="text-sm text-muted">
         {p.balance_message}
         {p.app_exists && ' (برنامه از قبل وجود دارد؛ پلن فعلی حفظ می‌شود)'}
@@ -108,7 +109,7 @@ export function EnvFormCard({ p, sessionId }: { p: Record<string, any>; sessionI
     }
   }
   return (
-    <Card title="متغیرهای محیطی" icon="🔐" meta={done ? <Chip tone="success">ثبت شد</Chip> : undefined}>
+    <Card title="متغیرهای محیطی" icon={<LockIcon size={18} />} meta={done ? <Chip tone="success">ثبت شد</Chip> : undefined}>
       <p className="text-sm text-muted">{p.text}</p>
       {prefilled > 0 && !done && <p className="mt-1 text-xs text-emerald-500">{prefilled} مقدار از فایل‌های .env پروژه خوانده شد؛ در صورت نیاز ویرایش کنید و «تأیید و ادامه» را بزنید.</p>}
       <div className="mt-3 space-y-2">
@@ -156,7 +157,7 @@ export function ManualStepCard({ p, sessionId, app }: { p: Record<string, any>; 
   const records: { type: string; name: string; value: string; note?: string }[] = Array.isArray(p.records) ? p.records : []
   const legacyRecords = !Array.isArray(p.records) && p.records ? Object.entries(p.records as Record<string, unknown>) : []
   return (
-    <Card title={p.title} icon="🖐️" tone="warning" meta={<Chip tone="warning">نیاز به کار دستی</Chip>}>
+    <Card title={p.title} icon={<HandIcon size={18} />} tone="warning" meta={<Chip tone="warning">نیاز به کار دستی</Chip>}>
       <p className="text-sm">{p.summary}</p>
       {p.domain && <p className="mt-1 text-sm">دامنه: <Ltr className="font-medium">{p.domain}</Ltr></p>}
       {p.reason && <p className="mt-1 text-sm text-amber-400">{p.reason}</p>}
@@ -181,7 +182,7 @@ export function ManualStepCard({ p, sessionId, app }: { p: Record<string, any>; 
                     {r.note && <div className="text-[11px] text-muted">{r.note}</div>}
                   </td>
                   <td className="px-2 py-1.5 text-left">
-                    <Button size="sm" variant="ghost" onClick={() => copy(`${i}`, r.value)}>{copied === `${i}` ? '✓ کپی شد' : 'کپی'}</Button>
+                    <Button size="sm" variant="ghost" onClick={() => copy(`${i}`, r.value)}>{copied === `${i}` ? <><CheckIcon size={12} /> کپی شد</> : <><CopyIcon size={12} /> کپی</>}</Button>
                   </td>
                 </tr>
               ))}
@@ -220,7 +221,7 @@ export function ManualStepCard({ p, sessionId, app }: { p: Record<string, any>; 
       )}
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Button variant="primary" loading={busy} disabled={done} onClick={confirm}>
-          {done ? '✓ بررسی شد' : 'انجام شد، دوباره بررسی کن'}
+          {done ? <><CheckIcon size={14} /> بررسی شد</> : 'انجام شد، دوباره بررسی کن'}
         </Button>
         {p.console_url && (
           <a className="btn-ghost" href={p.console_url} target="_blank" rel="noreferrer">

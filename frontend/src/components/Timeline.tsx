@@ -1,3 +1,4 @@
+import { AlertIcon, BotIcon, CheckCircleIcon, InfoIcon, RefreshIcon, RocketIcon, UserIcon } from './icons'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CHECK_NAMES, checkDetail, time } from '../format'
 import type { Project, Proposal, TimelineEvent } from '../types'
@@ -101,7 +102,7 @@ export function Timeline({ events, sessionId, app, onStartDeploy }: Props) {
             <div className="text-base font-semibold">سلام! من دستیار عملیاتی شما برای لیارا هستم.</div>
             <p className="mt-1 text-sm text-muted">پروژه‌تان را وارد کنید تا دیپلوی کنم، یا در مورد وضعیت و مشکلات سایت بپرسید. هیچ تغییر مهمی بدون تأیید شما انجام نمی‌شود.</p>
           </div>
-          <Card title="شروع دیپلوی" icon="🚀">
+          <Card title="شروع دیپلوی" icon={<RocketIcon size={18} />}>
             {!intake ? <IntakePanel compact onReady={setIntake} /> : null}
             {intake && (
               <div className="space-y-2">
@@ -137,7 +138,7 @@ function Thinking() {
 function Avatar({ role }: { role: 'user' | 'assistant' }) {
   return (
     <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm ${role === 'user' ? 'bg-emerald-500 text-white dark:text-slate-950' : 'bg-raised'}`} aria-hidden>
-      {role === 'user' ? '👤' : '🧭'}
+      {role === 'user' ? <UserIcon size={14} /> : <BotIcon size={14} />}
     </span>
   )
 }
@@ -170,13 +171,13 @@ function EventCard({ e, sessionId, app }: { e: TimelineEvent; sessionId: string;
     case 'notice':
       return (
         <div className="mr-9 rounded-xl border border-sky-400/30 bg-sky-400/10 px-3 py-2 text-xs text-sky-700 dark:text-sky-200">
-          ℹ️ اقدام کم‌ریسک به‌صورت خودکار انجام شد: {p.title}
+          <InfoIcon size={14} className="ml-1 text-sky-400" /> اقدام کم‌ریسک به‌صورت خودکار انجام شد: {p.title}
           {p.detail && <div className="mt-0.5 opacity-80">{p.detail}</div>}
         </div>
       )
     case 'error':
       return (
-        <Card tone="error" title="خطا" icon="⚠️">
+        <Card tone="error" title="خطا" icon={<AlertIcon size={18} className="text-rose-500" />}>
           <div className="text-sm">{p.text}</div>
           {p.steps && (
             <ul className="mt-2 space-y-1 text-xs">
@@ -191,7 +192,7 @@ function EventCard({ e, sessionId, app }: { e: TimelineEvent; sessionId: string;
       )
     case 'success':
       return (
-        <Card tone="success" title={p.text} icon="🎉">
+        <Card tone="success" title={p.text} icon={<CheckCircleIcon size={18} className="text-emerald-500" />}>
           {p.url && (
             <a className="btn-primary mt-1 w-full" href={p.url} target="_blank" rel="noreferrer" dir="ltr">
               باز کردن سایت ↗ <span className="mono opacity-90">{p.url}</span>
@@ -235,7 +236,7 @@ function EventCard({ e, sessionId, app }: { e: TimelineEvent; sessionId: string;
     case 'verify_round':
       return (
         <div className="px-9 text-xs text-muted">
-          🔁 دور {p.round}: پاسخ موفق {p.probe_success == null ? '—' : Math.round(p.probe_success * 100) + '٪'} · حافظه {p.memory ? Math.round(p.memory / 1024 / 1024) + ' MB' : '—'}
+          <RefreshIcon size={12} className="ml-1" /> دور {p.round}: پاسخ موفق {p.probe_success == null ? '—' : Math.round(p.probe_success * 100) + '٪'} · حافظه {p.memory ? Math.round(p.memory / 1024 / 1024) + ' MB' : '—'}
         </div>
       )
     default:

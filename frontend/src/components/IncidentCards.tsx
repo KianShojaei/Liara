@@ -1,3 +1,4 @@
+import { AlertIcon, BrainIcon, ChartIcon, CheckCircleIcon, CheckIcon, FileTextIcon, ListIcon, PuzzleIcon, SirenIcon, WrenchIcon } from './icons'
 import { useState } from 'react'
 import { api } from '../api'
 import { CHECK_NAMES, DOWNTIME, REVERSIBILITY, RISK, RISK_TONE, checkDetail, mb, num, pct, signed, time } from '../format'
@@ -11,7 +12,7 @@ export function IncidentBanner({ p }: { p: Record<string, any> }) {
   const closed = p.status === 'closed'
   return (
     <div className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm ${closed ? 'border-emerald-500/40 bg-emerald-500/10' : 'border-rose-500/40 bg-rose-500/10'}`}>
-      <span className="text-lg" aria-hidden>{closed ? '✅' : '🚨'}</span>
+      <span className={`mt-0.5 ${closed ? 'text-emerald-500' : 'text-rose-500'}`} aria-hidden>{closed ? <CheckCircleIcon size={20} /> : <SirenIcon size={20} />}</span>
       <div className="min-w-0 flex-1">
         <div className="font-semibold">{closed ? 'رخداد بسته شد' : 'رخداد باز شد'} — <Ltr>{p.app}</Ltr></div>
         {p.reasons?.length > 0 && <div className="mt-0.5 text-xs text-muted">{p.reasons.join('؛ ')}</div>}
@@ -28,7 +29,7 @@ export function EvidenceCard({ p }: { p: Record<string, any> }) {
   const ramLimit = p.plan?.ram_gb ? p.plan.ram_gb * 1024 ** 3 : undefined
   const cpuLimit = p.plan?.cpu_cores
   return (
-    <Card title="شواهد" icon="📊" meta={p.window_minutes ? <Chip tone="outline">{p.window_minutes} دقیقه‌ی اخیر</Chip> : undefined}>
+    <Card title="شواهد" icon={<ChartIcon size={18} />} meta={p.window_minutes ? <Chip tone="outline">{p.window_minutes} دقیقه‌ی اخیر</Chip> : undefined}>
       <LineChart
         series={[
           { label: 'حافظه (MB)', points: series.memory ?? [], color: '#818cf8', unit: (v) => String(Math.round(v / 1024 / 1024)), threshold: ramLimit, thresholdLabel: 'سقف پلن' },
@@ -81,7 +82,7 @@ export function EvidenceCard({ p }: { p: Record<string, any> }) {
 export function HypothesesCard({ p }: { p: Record<string, any> }) {
   const items: Hypothesis[] = p.items ?? []
   return (
-    <Card title="علت‌های احتمالی" icon="🧠">
+    <Card title="علت‌های احتمالی" icon={<BrainIcon size={18} />}>
       {p.summary && <p className="mb-3 text-sm">{p.summary}</p>}
       <ol className="space-y-4">
         {items.map((h, i) => {
@@ -132,7 +133,7 @@ export function RemediationCard({ p, sessionId }: { p: Record<string, any>; sess
     }
   }
   return (
-    <Card title="راه‌حل‌های پیشنهادی" icon="🛠️">
+    <Card title="راه‌حل‌های پیشنهادی" icon={<WrenchIcon size={18} />}>
       <p className="mb-3 text-xs text-muted">هیچ‌کدام خودکار اجرا نمی‌شود؛ با انتخاب هر گزینه یک کارت تأیید ساخته می‌شود.</p>
       <div className="grid gap-2">
         {options.map((o) => (
@@ -151,7 +152,7 @@ export function RemediationCard({ p, sessionId }: { p: Record<string, any>; sess
             {o.requires && <div className="mt-0.5 text-xs text-muted">نیازمند: {o.requires}</div>}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <Button variant={o.recommended ? 'primary' : 'secondary'} size="sm" loading={busy === o.id} disabled={!!busy || !!done[o.id]} title="یک کارت تأیید ساخته می‌شود؛ تا تأیید نکنید چیزی اجرا نمی‌شود" onClick={() => pick(o)}>
-                {done[o.id] ? '✓ ارسال شد' : 'اجرای این راه‌حل'}
+                {done[o.id] ? <><CheckIcon size={14} /> ارسال شد</> : 'اجرای این راه‌حل'}
               </Button>
               {done[o.id] && <span className="text-xs text-muted">{done[o.id]}</span>}
             </div>
@@ -166,7 +167,7 @@ export function VerificationCard({ p }: { p: Record<string, any> }) {
   const ok = !!p.ok
   const steps: { name: string; ok: boolean; detail: string }[] = p.steps ?? []
   return (
-    <Card title={ok ? 'بررسی نتیجه: موفق' : 'بررسی نتیجه: ناموفق'} icon={ok ? '✅' : '⚠️'} tone={ok ? 'success' : 'error'}>
+    <Card title={ok ? 'بررسی نتیجه: موفق' : 'بررسی نتیجه: ناموفق'} icon={ok ? <CheckCircleIcon size={18} className="text-emerald-500" /> : <AlertIcon size={18} className="text-rose-500" />} tone={ok ? 'success' : 'error'}>
       {p.summary && <p className="text-sm">{p.summary}</p>}
       {steps.length > 0 && (
         <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
@@ -208,7 +209,7 @@ function Cmp({ label, before, after, wide }: { label: string; before: string; af
 
 export function PatchCard({ p }: { p: Record<string, any> }) {
   return (
-    <Card title={p.ok ? 'پچ پیشنهادی ایجنت کدنویسی' : 'ایجنت کدنویسی پچی نداد'} icon="🧩" tone={p.ok ? 'info' : 'warning'} meta={p.branch ? <Chip tone="outline"><Ltr>{p.branch}</Ltr></Chip> : undefined}>
+    <Card title={p.ok ? 'پچ پیشنهادی ایجنت کدنویسی' : 'ایجنت کدنویسی پچی نداد'} icon={<PuzzleIcon size={18} />} tone={p.ok ? 'info' : 'warning'} meta={p.branch ? <Chip tone="outline"><Ltr>{p.branch}</Ltr></Chip> : undefined}>
       {p.log && <div className="text-xs text-muted">{p.log}</div>}
       {p.patch && (
         <pre className="code mt-2 max-h-72 overflow-auto">
@@ -226,7 +227,7 @@ export function PatchCard({ p }: { p: Record<string, any> }) {
 
 export function FixBriefCard({ p }: { p: Record<string, any> }) {
   return (
-    <Card title="FixBrief برای ایجنت کدنویسی" icon="📝" meta={p.confidence != null ? <Chip tone="outline">اطمینان {pct(p.confidence)}</Chip> : undefined}>
+    <Card title="FixBrief برای ایجنت کدنویسی" icon={<FileTextIcon size={18} />} meta={p.confidence != null ? <Chip tone="outline">اطمینان {pct(p.confidence)}</Chip> : undefined}>
       <dl className="space-y-1.5 text-sm">
         <div><dt className="inline text-muted">علامت: </dt><dd className="inline">{p.symptom}</dd></div>
         <div><dt className="inline text-muted">علت مشکوک: </dt><dd className="inline">{p.suspected_cause}</dd></div>
@@ -250,7 +251,7 @@ export function FixBriefCard({ p }: { p: Record<string, any> }) {
 export function LogsCard({ p }: { p: Record<string, any> }) {
   const lines: { type: string; datetime: string; message: string }[] = p.lines ?? []
   return (
-    <Card title="لاگ‌ها" icon="📜" meta={<Chip tone="outline"><Ltr>{p.app}</Ltr> · {lines.length} خط</Chip>}>
+    <Card title="لاگ‌ها" icon={<ListIcon size={18} />} meta={<Chip tone="outline"><Ltr>{p.app}</Ltr> · {lines.length} خط</Chip>}>
       <pre className="code max-h-64 overflow-auto">
         {lines.map((l, i) => (
           <div key={i} className={l.type === 'stderr' ? 'text-rose-300' : ''}>

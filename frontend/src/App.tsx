@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { BookIcon, ChatIcon, CompassIcon, HandIcon, MoonIcon, PackageIcon, ShieldIcon, SirenIcon, SunIcon } from './components/icons'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { api } from './api'
 import { Composer } from './components/Composer'
 import { AuditPanel, IncidentsPanel, LimitationsPanel, PolicyPanel } from './components/Panels'
@@ -11,13 +12,13 @@ import { applyTheme, savedTheme, type Theme } from './theme'
 import type { Incident, Status } from './types'
 
 type View = 'chat' | 'projects' | 'incidents' | 'audit' | 'limitations' | 'policy'
-const VIEWS: { id: View; label: string; icon: string }[] = [
-  { id: 'chat', label: 'گفتگو', icon: '💬' },
-  { id: 'projects', label: 'پروژه‌ها', icon: '📦' },
-  { id: 'incidents', label: 'رخدادها', icon: '🚨' },
-  { id: 'audit', label: 'ثبت وقایع', icon: '📒' },
-  { id: 'limitations', label: 'محدودیت‌ها', icon: '🖐️' },
-  { id: 'policy', label: 'سطوح ریسک', icon: '🛡️' },
+const VIEWS: { id: View; label: string; icon: ReactNode }[] = [
+  { id: 'chat', label: 'گفتگو', icon: <ChatIcon size={18} /> },
+  { id: 'projects', label: 'پروژه‌ها', icon: <PackageIcon size={18} /> },
+  { id: 'incidents', label: 'رخدادها', icon: <SirenIcon size={18} /> },
+  { id: 'audit', label: 'ثبت وقایع', icon: <BookIcon size={18} /> },
+  { id: 'limitations', label: 'محدودیت‌ها', icon: <HandIcon size={18} /> },
+  { id: 'policy', label: 'سطوح ریسک', icon: <ShieldIcon size={18} /> },
 ]
 
 const EMPTY_STATUS: Status = { ok: false, mode: 'mock', llm: false, balance: 0, hourly_burn: 0, runway_hours: null, runway_label: '—', apps: [], watcher: { running: false, apps: [] }, circuit_open: false }
@@ -93,8 +94,8 @@ export default function App() {
       {/* nav rail (right in RTL) */}
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-l border-line bg-surface/60 p-4 md:flex">
         <div className="mb-6 flex items-center gap-2 px-1">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/15 text-lg" aria-hidden>
-            🧭
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/15 text-emerald-500" aria-hidden>
+            <CompassIcon size={20} />
           </span>
           <div className="leading-tight">
             <div className="text-sm font-semibold">Liara Ops Copilot</div>
@@ -107,7 +108,7 @@ export default function App() {
             + گفتگوی جدید
           </button>
           <button className="btn-ghost btn-sm w-full" onClick={toggleTheme} title="تغییر تم">
-            {theme === 'dark' ? '☀️ تم روشن' : '🌙 تم تاریک'}
+            {theme === 'dark' ? <><SunIcon size={14} /> تم روشن</> : <><MoonIcon size={14} /> تم تاریک</>}
           </button>
         </div>
       </aside>
@@ -115,7 +116,7 @@ export default function App() {
       {/* main column */}
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-line bg-bg/85 px-4 py-2.5 backdrop-blur md:px-6">
-          <span className="text-sm font-semibold md:hidden">🧭 Copilot</span>
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold md:hidden"><CompassIcon size={16} className="text-emerald-500" /> Copilot</span>
           <h1 className="hidden text-sm font-semibold md:block">{VIEWS.find((v) => v.id === view)?.label}</h1>
           <div className="mr-auto flex items-center gap-2 text-xs text-muted">
             {view === 'chat' && sessionId && (
@@ -131,7 +132,7 @@ export default function App() {
               </span>
             )}
             <button className="btn-ghost btn-sm md:hidden" onClick={toggleTheme} aria-label="تغییر تم">
-              {theme === 'dark' ? '☀️' : '🌙'}
+              {theme === 'dark' ? <SunIcon size={14} /> : <MoonIcon size={14} />}
             </button>
             <button className="btn-ghost btn-sm md:hidden" onClick={() => { newSession(); setView('chat') }}>
               + جدید

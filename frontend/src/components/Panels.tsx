@@ -1,3 +1,4 @@
+import { ArrowLeftIcon, BookIcon, CheckIcon, FileTextIcon, HandIcon, PuzzleIcon, ReceiptIcon, RefreshIcon, ShieldIcon, SirenIcon, UndoIcon } from './icons'
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { ACTION, ACTOR, PROPOSAL_STATUS, TIER, dateTime, time } from '../format'
@@ -18,7 +19,7 @@ export function AuditPanel() {
       </div>
       <Card>
         {rows == null && <Skeleton className="h-24" />}
-        {rows && rows.length === 0 && <Empty icon="📒" title="هنوز چیزی ثبت نشده" hint="اولین عملیات را از گفتگو شروع کنید." />}
+        {rows && rows.length === 0 && <Empty icon={<BookIcon size={22} />} title="هنوز چیزی ثبت نشده" hint="اولین عملیات را از گفتگو شروع کنید." />}
         {rows && rows.length > 0 && (
           <div className="-mx-4 overflow-x-auto sm:-mx-5">
             <table className="w-full min-w-[40rem] text-xs">
@@ -66,7 +67,7 @@ export function LimitationsPanel() {
       {items == null && <Skeleton className="h-24" />}
       <div className="grid gap-3 md:grid-cols-2">
         {items?.map((l) => (
-          <Card key={l.id} title={l.title} icon="🖐️" meta={l.verify_tool ? <Chip tone="success">بررسی خودکار بعد از انجام</Chip> : undefined}>
+          <Card key={l.id} title={l.title} icon={<HandIcon size={18} />} meta={l.verify_tool ? <Chip tone="success">بررسی خودکار بعد از انجام</Chip> : undefined}>
             <p className="text-sm">{l.summary}</p>
             {l.manual_steps && (
               <ol className="mt-3 space-y-1.5 text-sm">
@@ -110,7 +111,7 @@ export function PolicyPanel() {
       </div>
       {tools == null && <Skeleton className="h-24" />}
       {(['T0', 'T1', 'T2', 'T3'] as const).map((t) => (
-        <Card key={t} title={`${t} — ${TIER[t].label}`} icon="🛡️" meta={<Chip tone={TIER[t].tone}>{tools?.filter((x) => x.tier === t).length ?? 0} ابزار</Chip>}>
+        <Card key={t} title={`${t} — ${TIER[t].label}`} icon={<ShieldIcon size={18} />} meta={<Chip tone={TIER[t].tone}>{tools?.filter((x) => x.tier === t).length ?? 0} ابزار</Chip>}>
           <p className="mb-3 text-xs text-muted">{DESC[t]}</p>
           <ul className="divide-y divide-line">
             {tools?.filter((x) => x.tier === t).map((x) => (
@@ -161,7 +162,7 @@ export function IncidentsPanel({ sessionId, onOpenChat }: { sessionId: string; o
       <div className="space-y-2">
         <h2 className="text-base font-semibold">رخدادها</h2>
         {items == null && <Skeleton className="h-16" />}
-        {items && items.length === 0 && <Empty icon="🚨" title="رخدادی ثبت نشده" hint="وقتی پایشگر مشکلی ببیند یا شما بگویید «سایت کند شده»، اینجا ثبت می‌شود." />}
+        {items && items.length === 0 && <Empty icon={<SirenIcon size={22} />} title="رخدادی ثبت نشده" hint="وقتی پایشگر مشکلی ببیند یا شما بگویید «سایت کند شده»، اینجا ثبت می‌شود." />}
         <ul className="space-y-1.5">
           {items?.map((i) => (
             <li key={i.id}>
@@ -177,17 +178,17 @@ export function IncidentsPanel({ sessionId, onOpenChat }: { sessionId: string; o
         </ul>
       </div>
       <div className="min-w-0 space-y-3">
-        {!selected && items && items.length > 0 && <Empty icon="👈" title="یک رخداد را انتخاب کنید" />}
+        {!selected && items && items.length > 0 && <Empty icon={<ArrowLeftIcon size={22} className="rtl:rotate-180" />} title="یک رخداد را انتخاب کنید" />}
         {selected && (
           <>
-            <Card title={<span>رخداد <Ltr>{selected.app_name}</Ltr></span>} icon="🧾" meta={<Chip tone={STATUS[selected.status]?.tone ?? 'neutral'}>{STATUS[selected.status]?.label ?? selected.status}</Chip>}>
+            <Card title={<span>رخداد <Ltr>{selected.app_name}</Ltr></span>} icon={<ReceiptIcon size={18} />} meta={<Chip tone={STATUS[selected.status]?.tone ?? 'neutral'}>{STATUS[selected.status]?.label ?? selected.status}</Chip>}>
               <div className="text-sm">{selected.summary ?? '—'}</div>
               <div className="mt-1 text-xs text-muted">{dateTime(selected.opened_at)} · {selected.trigger}</div>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button size="sm" loading={busy === 'verify'} disabled={!!busy} onClick={() => run('verify', async () => setVerify(await api.verifyIncident(selected.id)))}>🔁 بررسی مجدد علائم</Button>
-                <Button size="sm" loading={busy === 'brief'} disabled={!!busy} onClick={() => run('brief', async () => { const b = await api.fixBrief(selected.id); setSelected({ ...selected, fix_brief: b }) })}>📝 ساخت FixBrief</Button>
-                <Button size="sm" loading={busy === 'agent'} disabled={!!busy} onClick={() => run('agent', async () => { const projects = await api.projects().catch(() => []); const match = projects.find((p) => p.name === selected.app_name) ?? projects[0]; setPatch(await api.runCodingAgent(selected.id, match?.path ?? '', true)) })}>🧩 اجرای ایجنت کدنویسی (demo)</Button>
-                {selected.status !== 'closed' && <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => run('close', () => api.closeIncident(selected.id))}>✅ بستن رخداد</Button>}
+                <Button size="sm" loading={busy === 'verify'} disabled={!!busy} onClick={() => run('verify', async () => setVerify(await api.verifyIncident(selected.id)))}><RefreshIcon size={14} /> بررسی مجدد علائم</Button>
+                <Button size="sm" loading={busy === 'brief'} disabled={!!busy} onClick={() => run('brief', async () => { const b = await api.fixBrief(selected.id); setSelected({ ...selected, fix_brief: b }) })}><FileTextIcon size={14} /> ساخت FixBrief</Button>
+                <Button size="sm" loading={busy === 'agent'} disabled={!!busy} onClick={() => run('agent', async () => { const projects = await api.projects().catch(() => []); const match = projects.find((p) => p.name === selected.app_name) ?? projects[0]; setPatch(await api.runCodingAgent(selected.id, match?.path ?? '', true)) })}><PuzzleIcon size={14} /> اجرای ایجنت کدنویسی (demo)</Button>
+                {selected.status !== 'closed' && <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => run('close', () => api.closeIncident(selected.id))}><CheckIcon size={14} /> بستن رخداد</Button>}
               </div>
             </Card>
             {selected.evidence && <EvidenceCard p={selected.evidence} />}
@@ -195,7 +196,7 @@ export function IncidentsPanel({ sessionId, onOpenChat }: { sessionId: string; o
             {selected.remediation && (
               <>
                 <RemediationCard p={{ ...selected.remediation, incident_id: selected.id }} sessionId={sessionId || selected.session_id || ''} />
-                <Button variant="ghost" size="sm" onClick={onOpenChat}>↩ رفتن به گفتگو برای تأیید</Button>
+                <Button variant="ghost" size="sm" onClick={onOpenChat}><UndoIcon size={14} /> رفتن به گفتگو برای تأیید</Button>
               </>
             )}
             {selected.fix_brief && <FixBriefCard p={selected.fix_brief} />}

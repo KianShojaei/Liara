@@ -1,3 +1,4 @@
+import { CheckIcon, ShieldIcon, UndoIcon } from './icons'
 import { useState } from 'react'
 import { api } from '../api'
 import { CHECK_NAMES, DOWNTIME, PROPOSAL_STATUS, REVERSIBILITY, RISK, TIER, checkDetail, signed, time } from '../format'
@@ -44,7 +45,7 @@ export function ProposalCard({ proposal, ts }: { proposal: Proposal; ts?: string
     <Card
       tone={pending ? 'accent' : proposal.status === 'verified' ? 'success' : failed ? 'error' : 'default'}
       title={proposal.title}
-      icon="🛡️"
+      icon={<ShieldIcon size={18} />}
       meta={
         <>
           <Chip tone={tier.tone} title="سطح ریسک عملیات">{tier.label}</Chip>
@@ -80,7 +81,7 @@ export function ProposalCard({ proposal, ts }: { proposal: Proposal; ts?: string
       )}
       {impact.rollback_plan && (
         <div className="mt-3 flex gap-2 rounded-xl bg-raised/60 px-3 py-2 text-xs">
-          <span aria-hidden>↩️</span>
+          <span aria-hidden className="mt-0.5 text-muted"><UndoIcon size={14} /></span>
           <span><span className="font-medium">برنامه‌ی بازگشت:</span> {impact.rollback_plan}</span>
         </div>
       )}
@@ -109,7 +110,7 @@ export function ProposalCard({ proposal, ts }: { proposal: Proposal; ts?: string
       {pending && (
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Button variant="primary" loading={busy === 'approve'} disabled={busy != null} onClick={approve}>
-            ✓ تأیید و اجرا
+            <CheckIcon size={14} /> تأیید و اجرا
           </Button>
           <Button variant="ghost" loading={busy === 'reject'} disabled={busy != null} onClick={() => act('reject', () => api.reject(proposal.id, 'کاربر رد کرد'))}>
             رد کردن

@@ -1,3 +1,4 @@
+import { CheckIcon, XIcon } from './icons'
 import { useState, type ReactNode } from 'react'
 import type { Tone } from '../format'
 
@@ -11,14 +12,14 @@ export function Chip({ children, tone = 'neutral', title, className = '' }: { ch
 
 export type CardTone = 'default' | 'success' | 'error' | 'warning' | 'info' | 'accent'
 
-export function Card({ children, tone = 'default', title, icon, meta, className = '', id }: { children: ReactNode; tone?: CardTone; title?: ReactNode; icon?: string; meta?: ReactNode; className?: string; id?: string }) {
+export function Card({ children, tone = 'default', title, icon, meta, className = '', id }: { children: ReactNode; tone?: CardTone; title?: ReactNode; icon?: ReactNode; meta?: ReactNode; className?: string; id?: string }) {
   return (
     <section id={id} className={`card animate-rise ${tone !== 'default' ? `card-tone-${tone}` : ''} ${className}`}>
       {(title || meta) && (
         <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
             {icon && (
-              <span aria-hidden className="grid h-7 w-7 place-items-center rounded-lg bg-raised text-base">
+              <span aria-hidden className="grid h-7 w-7 place-items-center rounded-lg bg-raised text-muted">
                 {icon}
               </span>
             )}
@@ -58,12 +59,14 @@ export function Skeleton({ className = 'h-4 w-full' }: { className?: string }) {
   return <div className={`skeleton ${className}`} />
 }
 
-export function Empty({ icon = '◌', title, hint, action }: { icon?: string; title: string; hint?: string; action?: ReactNode }) {
+export function Empty({ icon, title, hint, action }: { icon?: ReactNode; title: string; hint?: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-line px-6 py-10 text-center">
-      <span className="text-3xl text-muted/70" aria-hidden>
-        {icon}
-      </span>
+      {icon && (
+        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-raised text-muted/80" aria-hidden>
+          {icon}
+        </span>
+      )}
       <div className="text-sm font-medium">{title}</div>
       {hint && <div className="max-w-sm text-xs text-muted">{hint}</div>}
       {action && <div className="mt-2">{action}</div>}
@@ -82,7 +85,7 @@ export function Dot({ tone = 'success', pulse }: { tone?: 'success' | 'danger' |
 }
 
 export function Check({ ok }: { ok: boolean }) {
-  return <span className={`inline-grid h-5 w-5 place-items-center rounded-full text-[11px] font-bold ${ok ? 'bg-emerald-500/15 text-emerald-500' : 'bg-rose-500/15 text-rose-500'}`}>{ok ? '✓' : '✗'}</span>
+  return <span className={`inline-grid h-5 w-5 place-items-center rounded-full text-[11px] font-bold ${ok ? 'bg-emerald-500/15 text-emerald-500' : 'bg-rose-500/15 text-rose-500'}`}>{ok ? <CheckIcon size={12} strokeWidth={2.5} /> : <XIcon size={12} strokeWidth={2.5} />}</span>
 }
 
 export function Sparkline({ points, color = '#10b981', height = 40, width = 160 }: { points: number[]; color?: string; height?: number; width?: number }) {

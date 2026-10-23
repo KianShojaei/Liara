@@ -1,3 +1,4 @@
+import { EyeIcon, PauseIcon } from './icons'
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { mb, num, toman } from '../format'
@@ -165,7 +166,7 @@ export function StatusPanel({ status, samples, selected, onSelect, sessionId, op
                 </div>
               </div>
               <Button variant="ghost" size="sm" className="mt-3 w-full" loading={busy} onClick={toggleWatch}>
-                {overview.watching ? '⏸ توقف پایش خودکار' : '👁 شروع پایش خودکار'}
+                {overview.watching ? <><PauseIcon size={14} /> توقف پایش خودکار</> : <><EyeIcon size={14} /> شروع پایش خودکار</>}
               </Button>
             </>
           )}

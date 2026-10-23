@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react'
+import { AlertIcon, FolderIcon, LinkIcon, MonitorIcon, PackageIcon, RocketIcon } from './icons'
+import { useCallback, useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react'
 import { api, uploadProject } from '../api'
 import { PLATFORM, bytesLabel } from '../format'
 import type { Project } from '../types'
@@ -48,10 +49,10 @@ export function IntakePanel({ onReady, compact = false }: { onReady: (p: Project
     handleFile(e.dataTransfer.files?.[0])
   }
 
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: 'upload', label: 'آپلود فایل', icon: '📁' },
-    { id: 'git', label: 'از Git', icon: '🔗' },
-    { id: 'local', label: 'پوشه‌ی محلی', icon: '💻' },
+  const tabs: { id: Tab; label: string; icon: ReactNode }[] = [
+    { id: 'upload', label: 'آپلود فایل', icon: <FolderIcon size={14} /> },
+    { id: 'git', label: 'از Git', icon: <LinkIcon size={14} /> },
+    { id: 'local', label: 'پوشه‌ی محلی', icon: <MonitorIcon size={14} /> },
   ]
 
   return (
@@ -77,7 +78,7 @@ export function IntakePanel({ onReady, compact = false }: { onReady: (p: Project
           className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-4 py-8 text-center transition-colors ${drag ? 'border-emerald-500 bg-emerald-500/10' : 'border-line hover:border-emerald-500/60 hover:bg-raised/40'}`}
         >
           <input ref={fileRef} type="file" accept=".zip,.tar.gz,.tgz" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
-          <span className="text-3xl" aria-hidden>📦</span>
+          <span className="text-muted/80" aria-hidden><PackageIcon size={36} /></span>
           <div className="text-sm font-medium">فایل پروژه را اینجا رها کنید یا کلیک کنید</div>
           <div className="text-xs text-muted">zip یا tar.gz · تا ۲۵۰ مگابایت · پوشه‌ی node_modules و .env لازم نیست</div>
           {progress != null && (
@@ -129,7 +130,7 @@ export function ProjectCard({ project, onDeploy, onDelete }: { project: Project;
   const [busy, setBusy] = useState(false)
   const valid = /^[a-z0-9][a-z0-9-]{1,29}$/.test(app)
   return (
-    <Card title={project.name} icon="📦" tone="accent" meta={a.error ? <Chip tone="danger">خطا در بررسی</Chip> : <Chip tone="success">آماده‌ی دیپلوی</Chip>}>
+    <Card title={project.name} icon={<PackageIcon size={18} />} tone="accent" meta={a.error ? <Chip tone="danger">خطا در بررسی</Chip> : <Chip tone="success">آماده‌ی دیپلوی</Chip>}>
       {a.error ? (
         <p className="text-sm text-rose-400">{a.error}</p>
       ) : (
@@ -154,7 +155,7 @@ export function ProjectCard({ project, onDeploy, onDelete }: { project: Project;
           {a.warnings.length > 0 && (
             <ul className="mt-2 space-y-0.5 text-xs text-amber-400">
               {a.warnings.map((w) => (
-                <li key={w}>⚠ {w}</li>
+                <li key={w} className="flex items-start gap-1"><AlertIcon size={13} className="mt-1 shrink-0 text-amber-400" /> <span>{w}</span></li>
               ))}
             </ul>
           )}
@@ -164,7 +165,7 @@ export function ProjectCard({ project, onDeploy, onDelete }: { project: Project;
               <input className={`input mono mt-1 ${!valid ? 'border-rose-500/60' : ''}`} dir="ltr" value={app} onChange={(e) => setApp(e.target.value.toLowerCase())} />
             </label>
             <Button variant="primary" loading={busy} disabled={!valid} onClick={async () => { setBusy(true); try { await onDeploy(project.path, app) } finally { setBusy(false) } }}>
-              🚀 شروع دیپلوی
+              <RocketIcon size={14} /> شروع دیپلوی
             </Button>
             {onDelete && (
               <Button variant="ghost" onClick={onDelete} title="حذف از لیست پروژه‌ها">
@@ -207,7 +208,7 @@ export function ProjectsView({ onDeploy }: { onDeploy: (path: string, app: strin
       <div>
         <h3 className="mb-2 text-sm font-semibold text-muted">پروژه‌های وارد شده</h3>
         {items == null && <Skeleton className="h-16" />}
-        {items && items.length === 0 && <Empty icon="📂" title="هنوز پروژه‌ای وارد نشده" hint="یک فایل zip رها کنید یا آدرس Git را وارد کنید." />}
+        {items && items.length === 0 && <Empty icon={<FolderIcon size={22} />} title="هنوز پروژه‌ای وارد نشده" hint="یک فایل zip رها کنید یا آدرس Git را وارد کنید." />}
         <div className="space-y-3">
           {items?.filter((p) => p.name !== fresh?.name).map((p) => (
             <ProjectCard key={p.name} project={p} onDeploy={onDeploy} onDelete={() => remove(p.name)} />
