@@ -91,24 +91,35 @@ svg.i { width: 1.1em; height: 1.1em; vertical-align: -.2em; stroke: currentColor
 .fact .k { font-size: 1.2em; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
 
 
+.s2 h1 { font-size: clamp(18px, 2vw, 28px); margin: 2px 0 0; } .s2 .lede { font-size: .88em; max-width: 90ch; } .s2 .foot { margin-top: 6px; padding-top: 6px; }
 /* ---------- slide 2 diagram ---------- */
-.dg { display: grid; gap: 0; max-width: 1180px; margin: 4px auto 0; width: 100%; }
-.r { display: grid; gap: 14px; }
+.n .tech { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-top: 5px; }
+.n .tech em { direction: ltr; unicode-bidi: isolate; font-style: normal; font-size: .68em; line-height: 1.5; padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); color: var(--fg); white-space: nowrap; }
+.n.ours .tech em { background: rgba(34,197,94,.12); border-color: rgba(34,197,94,.3); color: #c9f5e2; }
+.n.gate .tech em { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2); color: #ffe4d6; }
+.stack { display: grid; grid-template-columns: 1.1fr 1.4fr 1.3fr auto; gap: 8px; margin-top: 8px; font-size: .8em; align-items: center; }
+.stack > div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; }
+.stack b { color: var(--accent-2); display: block; font-size: .95em; }
+.stack span { color: var(--muted); }
+.stack .legend { margin: 0; background: none; border: 0; flex-direction: column; gap: 4px; align-items: flex-start; }
+
+.dg { display: grid; gap: 0; max-width: 1500px; margin: 0 auto; width: 100%; font-size: .82em; }
+.r { display: grid; gap: 10px; }
 .r1 { grid-template-columns: 1fr 1fr 1fr 1fr; }
 .r2 { grid-template-columns: 1fr 1fr 1fr 1fr; position: relative; }
 .span2 { grid-column: span 2; }
 .pass { display: grid; }
 .r5 { grid-template-columns: repeat(4, 1fr); }
-.n { border-radius: 10px; padding: 8px 12px; text-align: center; border: 1px solid transparent; min-width: 0; }
+.n { border-radius: 10px; padding: 5px 9px; text-align: center; border: 1px solid transparent; min-width: 0; }
 .n b { display: block; font-size: 1em; }
-.n span { display: block; color: var(--muted); font-size: .8em; line-height: 1.45; }
+.n span { display: block; color: var(--muted); font-size: .76em; line-height: 1.4; }
 .n.ext { background: #262b33; border-color: #3a414c; color: var(--fg); }
 .n.ours { background: #0f3d33; border-color: #1f6b58; color: #e6fff5; }
 .n.ours span { color: #9fd8c3; }
 .n.gate { background: #5a2412; border-color: #8a3a1c; color: #fff1ea; }
 .n.gate span { color: #f3c1aa; }
 .n.gate b { font-size: 1.1em; }
-.a1, .a2, .a3, .a4 { height: 28px; align-items: stretch; }
+.a1, .a2, .a3, .a4 { height: 16px; align-items: stretch; }
 .a1 { grid-template-columns: 1fr 1fr 1fr 1fr; }
 .a2 { grid-template-columns: 1fr 1fr 1fr 1fr; }
 .a3 { grid-template-columns: 1fr; }
@@ -117,14 +128,14 @@ svg.i { width: 1.1em; height: 1.1em; vertical-align: -.2em; stroke: currentColor
 .ar::after { content: ""; position: absolute; bottom: -1px; left: -4px; border: 5px solid transparent; border-top: 7px solid var(--line-strong); }
 .ln { display: block; width: 2px; height: 100%; margin: 0 auto; background: var(--line-strong); }
 .r2 .link { position: absolute; top: 50%; right: calc(50% - 7px); width: 14px; height: 2px; background: var(--line-strong); }
-.layer { border: 1px dashed var(--line-strong); border-radius: 14px; padding: 10px 12px 12px; background: rgba(255,255,255,.015); }
+.layer { border: 1px dashed var(--line-strong); border-radius: 14px; padding: 8px 10px 10px; background: rgba(255,255,255,.015); }
 .layer-title { font-size: .8em; color: var(--muted); margin-bottom: 8px; }
-.tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .legend { display: flex; flex-wrap: wrap; gap: 18px; justify-content: flex-start; margin-top: 12px; font-size: .82em; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 8px; }
 .sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
 .sw.ext { background: #3a414c; } .sw.ours { background: #1f6b58; } .sw.gate { background: #8a3a1c; }
-@media (max-width: 900px) { .r1, .r2, .r5, .tools, .a1, .a4 { grid-template-columns: 1fr; } .a1, .a2, .a3, .a4 { display: none; } .r2 .link { display: none; } }
+@media (max-width: 900px) { .r1, .r2, .r5, .tools, .a1, .a4, .stack { grid-template-columns: 1fr; } .a1, .a2, .a3, .a4 { display: none; } .r2 .link { display: none; } }
 
 @media (max-width: 900px) {
   .s1-body, .arch, .strip, .loop, .tiers, .caps { grid-template-columns: 1fr; }
@@ -201,7 +212,7 @@ svg.i { width: 1.1em; height: 1.1em; vertical-align: -.2em; stroke: currentColor
 </section>
 
 <!-- ============================ SLIDE 2 ============================ -->
-<section class="slide" id="s2">
+<section class="slide s2" id="s2">
   <div class="top">
     <div class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2.2 5.3-5.3 2.2 2.2-5.3z"/></svg></span>Liara Ops Copilot</div>
     <span>اسلاید ۲ از ۲ · خلاصه‌ی گرافیکی راهکار</span>
@@ -211,53 +222,49 @@ svg.i { width: 1.1em; height: 1.1em; vertical-align: -.2em; stroke: currentColor
     <div>
       <div class="kicker">راهکار ما</div>
       <h1>مدل پیشنهاد می‌دهد؛ کدِ قطعی اجرا، تأیید و حسابرسی می‌کند</h1>
-      <p class="lede">سه رابط روی یک هسته‌ی مشترک؛ هر فراخوانی ابزار از دروازه‌ی سیاست می‌گذرد و تغییرات فقط با تأیید انسان اجرا می‌شوند. تشخیص مشکل شواهدمحور است و بدون LLM هم کار می‌کند.</p>
+      <p class="lede">سه رابط روی یک هسته‌ی مشترک؛ هر فراخوانی ابزار از دروازه‌ی سیاست می‌گذرد و فقط با تأیید انسان اجرا می‌شود. زیر هر بلوک، فناوری و الگوی به‌کاررفته آمده است.</p>
     </div>
 
     <div class="dg">
-      <!-- row 1: interfaces -->
       <div class="r r1">
-        <div class="n ext"><b>Web UI</b><span>گفتگوی RTL، کارت‌های تأیید</span></div>
-        <div class="n ext"><b>CLI</b><span>کلاینت سبک</span></div>
+        <div class="n ext"><b>Web UI</b><span>گفتگوی RTL، کارت‌های تأیید، SSE زنده</span><div class="tech"><em>TypeScript</em><em>React 18</em><em>Vite</em><em>Tailwind</em><em>SSE</em></div></div>
+        <div class="n ext"><b>CLI</b><span>همان جریان‌ها در ترمینال</span><div class="tech"><em>Python</em><em>Typer</em></div></div>
         <div></div>
-        <div class="n ext"><b>Coding agent</b><span>Claude Code / Cursor از طریق MCP</span></div>
+        <div class="n ext"><b>Coding agent</b><span>Claude Code / Cursor از طریق MCP</span><div class="tech"><em>MCP stdio / HTTP</em><em>۲۲ ابزار</em></div></div>
       </div>
       <div class="r a1"><i class="ar"></i><i class="ar"></i><i></i><i class="ln"></i></div>
-      <!-- row 2: orchestrator + llm -->
       <div class="r r2">
-        <div class="n ours span2"><b>Orchestrator</b><span>دیپلوی، عملیات، بررسی رخداد؛ ماشین‌حالت‌های قطعی</span></div>
-        <div class="n ours"><b>LLM gateway</b><span>مدل‌های BoxAPI؛ tools یا JSON</span></div>
+        <div class="n ours span2"><b>Orchestrator</b><span>مسیریاب کلیدواژه → مسیریاب LLM → حلقه‌ی ابزار؛ ماشین‌حالت‌های قطعی DeployWizard · Investigator · Watcher</span><div class="tech"><em>Python 3.11</em><em>FastAPI</em><em>asyncio</em><em>State machines</em><em>Pydantic v2</em></div></div>
+        <div class="n ours"><b>LLM gateway</b><span>مدل قوی/کوچک، structured output، redaction</span><div class="tech"><em>openai SDK</em><em>BoxAPI (gpt-6-luna / gpt-5.4-mini)</em><em>tool calling / JSON protocol</em></div></div>
         <div class="pass"><i class="ln"></i></div>
         <i class="link"></i>
       </div>
       <div class="r a2"><i class="ar span2"></i><i></i><i class="ar"></i></div>
-      <!-- row 3: policy gate -->
-      <div class="n gate"><b>Policy and approval engine</b><span>سطوح ریسک T0–T3 · تأیید انسان · allowlist و cost guard · audit فقط‌افزودنی</span></div>
+      <div class="n gate"><b>Policy and approval engine</b><span>سطوح ریسک T0–T3 · تأیید انسان · allowlist و cost guard · dry-run · audit فقط‌افزودنی</span><div class="tech"><em>HMAC-SHA256 single-use tokens</em><em>Idempotency keys</em><em>Proposal → Approval → Execute → Verify → Audit</em></div></div>
       <div class="r a3"><i class="ar"></i></div>
-      <!-- row 4: tool layer -->
       <div class="layer">
-        <div class="layer-title">Tool layer · همین ابزارها به‌صورت MCP server هم عرضه می‌شوند</div>
+        <div class="layer-title">Tool layer · هر ابزار با سطح ریسک ثبت شده و به‌صورت MCP server هم عرضه می‌شود</div>
         <div class="tools">
-          <div class="n ours"><b>Liara client</b><span>API تایپ‌شده، retry، circuit breaker</span></div>
-          <div class="n ours"><b>Deploy engine</b><span>پیشنهاد پلن، CLI/API، verifier</span></div>
-          <div class="n ours"><b>SRE toolkit</b><span>تحلیل، رتبه‌بندی علت، بررسی نتیجه</span></div>
-          <div class="n ours"><b>Watcher</b><span>پایش سلامت و متریک‌ها</span></div>
-          <div class="n ours"><b>Agent bridge</b><span>FixBrief، ابزارهای MCP</span></div>
-          <div class="n ours"><b>Docs RAG</b><span>جست‌وجوی مستندات لیارا</span></div>
+          <div class="n ours"><b>Liara client</b><span>کلاینت تایپ‌شده‌ی API لیارا</span><div class="tech"><em>httpx async</em><em>retry + backoff</em><em>circuit breaker</em><em>secret masking</em></div></div>
+          <div class="n ours"><b>Deploy engine</b><span>تحلیل پروژه، پیشنهاد پلن، دیپلوی، verifier</span><div class="tech"><em>liara CLI subprocess</em><em>multipart tar.gz</em><em>release polling</em><em>HTTP probe</em></div></div>
+          <div class="n ours"><b>SRE toolkit</b><span>جمع‌آوری → تحلیل → شواهد → فرضیه → راه‌حل → بررسی</span><div class="tech"><em>linear-regression slope</em><em>z-score</em><em>log clustering + stack trace</em><em>rule ranking + LLM re-rank</em></div></div>
+          <div class="n ours"><b>Watcher</b><span>پایش سلامت و متریک‌ها، باز کردن incident</span><div class="tech"><em>asyncio scheduler</em><em>ring buffer (SQLite)</em><em>threshold / slope rules</em></div></div>
+          <div class="n ours"><b>Agent bridge</b><span>FixBrief برای ایجنت کدنویسی، اعمال پچ با تأیید</span><div class="tech"><em>FixBrief JSON</em><em>git apply</em><em>demo patch mode</em></div></div>
+          <div class="n ours"><b>Docs RAG</b><span>جست‌وجوی مستندات و رجیستری محدودیت‌ها</span><div class="tech"><em>text-embedding-3-small</em><em>cosine (numpy)</em><em>keyword fallback</em><em>YAML registry</em></div></div>
         </div>
       </div>
       <div class="r a4"><i class="ar"></i><i class="ar"></i><i class="ar"></i><i class="ar"></i></div>
-      <!-- row 5: outside systems -->
       <div class="r r5">
-        <div class="n ext"><b>Liara APIs</b><span>api.liara.ir · dns-service</span></div>
-        <div class="n ext"><b>Liara CLI</b><span>liara deploy</span></div>
-        <div class="n ext"><b>Project repo</b><span>آپلود، Git، پوشه‌ی محلی</span></div>
-        <div class="n ext"><b>SQLite</b><span>audit، proposals، incidents</span></div>
+        <div class="n ext"><b>Liara APIs</b><span>api.liara.ir · dns-service.liara.ir</span><div class="tech"><em>REST / OpenAPI 3</em><em>Bearer JWT</em><em>teamID</em></div></div>
+        <div class="n ext"><b>Liara CLI</b><span>دیپلوی رسمی</span><div class="tech"><em>@liara/cli (Node)</em></div></div>
+        <div class="n ext"><b>Project repo</b><span>آپلود، Git، پوشه‌ی محلی</span><div class="tech"><em>zip / tar.gz</em><em>git clone</em><em>zip-slip guard</em></div></div>
+        <div class="n ext"><b>SQLite</b><span>audit، proposals، incidents، snapshots</span><div class="tech"><em>WAL</em><em>JSON columns</em></div></div>
       </div>
-      <div class="legend">
-        <span><i class="sw ext"></i>سیستم‌های بیرونی</span>
-        <span><i class="sw ours"></i>کد ما</span>
-        <span><i class="sw gate"></i>دروازه‌ی امنیت: هر فراخوانی ابزار از اینجا می‌گذرد</span>
+      <div class="stack">
+        <div><b>زبان‌ها</b><span>Python 3.11 (backend، CLI، MCP، ابزارها) · TypeScript (UI) · JavaScript/Node (اپ نمونه، CLI لیارا)</span></div>
+        <div><b>معماری</b><span>لایه‌بندی رابط / هماهنگ‌کننده / سیاست / قابلیت · local-first · ماشین‌حالت‌های قطعی · «مدل پیشنهاد می‌دهد، کد اجرا می‌کند»</span></div>
+        <div><b>کیفیت و امنیت</b><span>pytest (۱۹ تست) + mock لیارا با سناریوی خطا · Playwright · ruff · redaction اسرار · allowlist · cost guard</span></div>
+        <div class="legend"><span><i class="sw ext"></i>سیستم‌های بیرونی</span><span><i class="sw ours"></i>کد ما</span><span><i class="sw gate"></i>دروازه‌ی امنیت</span></div>
       </div>
     </div>
   </div>
