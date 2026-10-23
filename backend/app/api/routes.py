@@ -285,6 +285,9 @@ async def status(request: Request) -> dict[str, Any]:
             "apps": [],
             "watcher": rt.watcher.status() if rt.watcher else {"running": False},
             "circuit_open": rt.client.circuit_open,
+            "circuit_seconds_left": round(rt.client.circuit_seconds_left),
+            "last_error": rt.client.last_error,
+            "api_base": rt.settings.api_base,
         }
     allow = rt.settings.app_allowlist
     prices = {p.plan_id: p.price for p in me.project_plans()}
@@ -308,6 +311,9 @@ async def status(request: Request) -> dict[str, Any]:
         ],
         "watcher": rt.watcher.status() if rt.watcher else {"running": False},
         "circuit_open": rt.client.circuit_open,
+        "circuit_seconds_left": round(rt.client.circuit_seconds_left),
+        "last_error": rt.client.last_error,
+        "api_base": rt.settings.api_base,
     }
 
 

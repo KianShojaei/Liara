@@ -52,8 +52,8 @@ log = logging.getLogger("copilot.liara")
 
 MAX_RETRIES = 3
 MIN_INTERVAL_SECONDS = 0.15
-CIRCUIT_FAILURE_THRESHOLD = 5
-CIRCUIT_COOLDOWN_SECONDS = 30.0
+CIRCUIT_FAILURE_THRESHOLD = 6  # consecutive failed *requests* (not retry attempts)
+CIRCUIT_COOLDOWN_SECONDS = 20.0
 DEFAULT_TIMEOUT = httpx.Timeout(20.0, connect=10.0)
 
 
@@ -78,6 +78,12 @@ class _CircuitBreaker:
         self._cooldown = cooldown
         self._failures = 0
         self._opened_at: float | None = None
+
+    @property
+    def seconds_left(self) -> float:
+        if self._opened_at is None:
+            return 0.0
+        return max(0.0, self._cooldown - (time.monotonic() - self._opened_at))
 
     def check(self) -> None:
         if self._opened_at is None:
@@ -137,6 +143,7 @@ class LiaraClient:
         self._recorder = recorder
         self._throttle = _Throttle(MIN_INTERVAL_SECONDS)
         self._breaker = _CircuitBreaker(CIRCUIT_FAILURE_THRESHOLD, CIRCUIT_COOLDOWN_SECONDS)
+        self.last_error: str = ""  # masked, for the status panel
         self._http = httpx.AsyncClient(
             headers={"Authorization": f"Bearer {token}", "User-Agent": "liara-ops-copilot/0.1"},
             timeout=timeout,
@@ -148,6 +155,10 @@ class LiaraClient:
     @property
     def circuit_open(self) -> bool:
         return self._breaker.is_open
+
+    @property
+    def circuit_seconds_left(self) -> float:
+        return self._breaker.seconds_left
 
     # ------------------------------------------------------------------ core
 
@@ -179,7 +190,13 @@ class LiaraClient:
                 last_error = LiaraUnavailable(
                     f"{type(exc).__name__}: {mask_text(str(exc))}".strip(": ")
                 )
-                self._breaker.failure()
+                log.warning(
+                    "Liara %s %s failed (attempt %d): %s",
+                    method,
+                    path,
+                    attempt + 1,
+                    last_error.message,
+                )
                 await self._backoff(attempt)
                 continue
 
@@ -189,11 +206,18 @@ class LiaraClient:
                 continue
             if response.status_code >= 500:
                 last_error = LiaraUnavailable(f"HTTP {response.status_code} on {path}")
-                self._breaker.failure()
+                log.warning(
+                    "Liara %s %s -> %d (attempt %d)",
+                    method,
+                    path,
+                    response.status_code,
+                    attempt + 1,
+                )
                 await self._backoff(attempt)
                 continue
 
             self._breaker.success()
+            self.last_error = ""
             body = self._parse(response, expect_json)
             if self._recorder is not None:
                 self._recorder.record(method, path, response.status_code, body)
@@ -201,7 +225,11 @@ class LiaraClient:
                 raise self._to_error(response.status_code, path, body)
             return body
 
-        raise last_error or LiaraUnavailable("unknown")
+        error = last_error or LiaraUnavailable("unknown")
+        self.last_error = f"{method} {path}: {error.message}"
+        if not isinstance(error, LiaraRateLimited):
+            self._breaker.failure()
+        raise error
 
     @staticmethod
     async def _backoff(attempt: int, retry_after: str | None = None) -> None:

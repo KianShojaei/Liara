@@ -60,7 +60,7 @@ export function StatusPanel({ status, samples, selected, onSelect, sessionId, op
           </Chip>
           <Chip tone={status?.llm ? 'info' : 'outline'} title="مدل زبانی">{status?.llm ? 'LLM فعال' : 'LLM غیرفعال'}</Chip>
           {status?.watcher?.running && <Chip tone="violet">پایش فعال</Chip>}
-          {status?.circuit_open && <Chip tone="danger">قطع موقت API</Chip>}
+          {status?.circuit_open && <Chip tone="danger">قطع موقت API{status.circuit_seconds_left ? ` · ${status.circuit_seconds_left}s` : ''}</Chip>}
         </div>
         {status == null ? (
           <div className="mt-3 space-y-2">
@@ -87,7 +87,19 @@ export function StatusPanel({ status, samples, selected, onSelect, sessionId, op
             </div>
           </dl>
         ) : (
-          <div className="mt-3 text-sm text-rose-400">{status.error ?? 'در حال اتصال…'}</div>
+          <div className="mt-3 space-y-1 text-sm text-rose-400">
+            <div>{status.error ?? 'در حال اتصال…'}</div>
+            {status.last_error && (
+              <div className="text-[11px] text-muted" dir="ltr">
+                {status.last_error}
+              </div>
+            )}
+            {status.api_base && (
+              <div className="text-[11px] text-muted" dir="ltr">
+                {status.api_base}
+              </div>
+            )}
+          </div>
         )}
       </section>
 

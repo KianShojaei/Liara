@@ -40,6 +40,9 @@ export interface Status {
   apps: AppSummary[]
   watcher: { running: boolean; interval?: number; apps: { app: string; session_id: string; last: any }[] }
   circuit_open: boolean
+  circuit_seconds_left?: number
+  last_error?: string
+  api_base?: string
 }
 
 export interface AppOverview {
