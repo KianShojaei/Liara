@@ -53,7 +53,7 @@ export interface AppOverview {
   cpu: [number, number][]
   memory: [number, number][]
   now: { cpu: number | null; memory: number | null } | null
-  probe: { ok: boolean; status: number | null; latency_ms: number | null } | null
+  probe: { ok: boolean; status: number | null; latency_ms: number | null; healthy?: boolean; protected?: boolean } | null
   watching: boolean
   snapshots: { ts: number; cpu: number | null; memory: number | null; http_ok: boolean | null; latency_ms: number | null }[]
 }
