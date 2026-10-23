@@ -38,7 +38,7 @@ export default function App() {
   }
 
   const refresh = useCallback(() => {
-    api.status().then(setStatus).catch((e) => setStatus({ ...EMPTY_STATUS, error: String(e.message) }))
+    api.status().then(setStatus).catch((e) => setStatus({ ...EMPTY_STATUS, error: `backend در دسترس نیست (${String(e.message)}) — پنجره‌ی backend را بررسی کنید` }))
     api.incidents().then(setIncidents).catch(() => undefined)
   }, [])
 
