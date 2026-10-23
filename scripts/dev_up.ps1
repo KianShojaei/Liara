@@ -6,6 +6,17 @@ $py = Join-Path $root "backend\.venv\Scripts\python.exe"
 if (-not (Test-Path $py)) { Write-Error "backend\.venv not found. Run: cd backend; uv venv .venv; uv pip install -p .venv\Scripts\python.exe -e `".[dev]`""; exit 1 }
 if (-not (Test-Path (Join-Path $root ".env"))) { Copy-Item (Join-Path $root ".env.example") (Join-Path $root ".env"); Write-Host ".env created from .env.example - put your keys there (never in .env.example)." }
 
+# Stop whatever still listens on our ports from a previous run (WinError 10048 otherwise).
+foreach ($port in 8081, 3000, 8000, 5173) {
+  try {
+    Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction Stop | ForEach-Object {
+      Write-Host "Stopping process $($_.OwningProcess) on port $port"
+      Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue
+    }
+  } catch { }
+}
+Start-Sleep 1
+
 function Start-Window($title, $workdir, $command) {
   Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$host.UI.RawUI.WindowTitle='$title'; Set-Location '$workdir'; $command"
 }
