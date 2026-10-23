@@ -24,4 +24,4 @@ Source of truth: `backend/app/knowledge/limitations.yaml` (rendered in the UI as
 - The watcher runs while the backend runs (not a 24/7 service); that is acceptable for the challenge and shown as automation.
 - Hypotheses are rule-based with optional LLM refinement; confidence is heuristic, not calibrated.
 - Mock mode replays shapes from the official spec; field vocabularies marked ASSUMED may differ on the real API until probed.
-- Approvals are per-machine (local SQLite); there is no multi-user auth in the web UI.
+- The web UI has a single shared password (`COPILOT_UI_PASSWORD`) for public deployments; there is no per-user auth or roles.

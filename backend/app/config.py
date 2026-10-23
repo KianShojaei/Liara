@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     copilot_enable_guarded: bool = False
     copilot_host: str = "127.0.0.1"
     copilot_port: int = 8000
+    copilot_ui_password: str = ""  # required for public deployments (see Dockerfile)
 
     # Watcher
     watcher_enabled: bool = True

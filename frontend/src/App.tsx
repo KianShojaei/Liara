@@ -9,6 +9,7 @@ import { Timeline } from './components/Timeline'
 import { Dot } from './components/ui'
 import { useSession } from './hooks/useSession'
 import { applyTheme, savedTheme, type Theme } from './theme'
+import { Login } from './Login'
 import type { Incident, Status } from './types'
 
 type View = 'chat' | 'projects' | 'incidents' | 'audit' | 'limitations' | 'policy'
@@ -23,7 +24,28 @@ const VIEWS: { id: View; label: string; icon: ReactNode }[] = [
 
 const EMPTY_STATUS: Status = { ok: false, mode: 'mock', llm: false, balance: 0, hourly_burn: 0, runway_hours: null, runway_label: '—', apps: [], watcher: { running: false, apps: [] }, circuit_open: false }
 
+function AuthGate({ children }: { children: ReactNode }) {
+  const [state, setState] = useState<'checking' | 'login' | 'ok'>('checking')
+  useEffect(() => {
+    api.authStatus().then((s) => setState(s.required && !s.authenticated ? 'login' : 'ok')).catch(() => setState('ok'))
+    const onUnauthorized = () => setState('login')
+    window.addEventListener('copilot:unauthorized', onUnauthorized)
+    return () => window.removeEventListener('copilot:unauthorized', onUnauthorized)
+  }, [])
+  if (state === 'checking') return null
+  if (state === 'login') return <Login onDone={() => setState('ok')} />
+  return <>{children}</>
+}
+
 export default function App() {
+  return (
+    <AuthGate>
+      <Console />
+    </AuthGate>
+  )
+}
+
+function Console() {
   const { sessionId, events, connected, samples, newSession, send } = useSession()
   const [theme, setTheme] = useState<Theme>(savedTheme)
   const [status, setStatus] = useState<Status | null>(null)

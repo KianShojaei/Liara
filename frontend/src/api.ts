@@ -6,6 +6,9 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
     headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
+  if (res.status === 401 && !url.startsWith('/api/auth/')) {
+    window.dispatchEvent(new CustomEvent('copilot:unauthorized'))
+  }
   if (!res.ok) {
     let detail = res.statusText
     try {
@@ -48,6 +51,9 @@ export function uploadProject(file: File, name: string, onProgress: (ratio: numb
 const post = <T,>(url: string, body?: unknown) => request<T>('POST', url, body ?? {})
 
 export const api = {
+  authStatus: () => get<{ required: boolean; authenticated: boolean }>('/api/auth/status'),
+  login: (password: string) => post<{ ok: boolean }>('/api/auth/login', { password }),
+  logout: () => post<{ ok: boolean }>('/api/auth/logout'),
   createSession: (title: string) => post<Session>('/api/sessions', { title }),
   listSessions: () => get<Session[]>('/api/sessions'),
   timeline: (id: string, after = 0) => get<TimelineEvent[]>(`/api/sessions/${id}/timeline?after=${after}`),

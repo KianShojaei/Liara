@@ -1,0 +1,6 @@
+{
+  "platform": "docker",
+  "port": 8000,
+  "build": { "location": "iran" },
+  "healthCheck": { "command": ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/healthz"], "interval": 30, "timeout": 5, "retries": 3, "startPeriod": 20 }
+}

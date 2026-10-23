@@ -114,6 +114,16 @@ make frontend                 # http://localhost:5173
 - **MCP**: `claude mcp add liara-ops -- backend/.venv/bin/python -m app.mcp_server`
 - **تست و lint**: `make test` (۱۹ تست: سیاست و تأیید، تحلیل‌گرها، analyzer پروژه، API end-to-end روی mock) · `make lint`.
 
+## دیپلوی خودِ کوپایلوت روی لیارا
+
+مخزن یک `Dockerfile` چندمرحله‌ای (build رابط → runtime پایتون) و `liara.json` با پلتفرم `docker` دارد.
+
+```bash
+liara deploy --app <نام-برنامه> --port 8000 --platform docker
+```
+
+در تنظیمات برنامه این متغیرها را بگذارید: `LIARA_API_TOKEN`، `BOXAPI_API_KEY`، `COPILOT_MODE=live`، `COPILOT_APP_ALLOWLIST`، و **حتماً** `COPILOT_UI_PASSWORD` (رابط عمومی با رمز و کوکی امضاشده محافظت می‌شود). برای ماندگاری دیتابیس و پروژه‌های واردشده یک دیسک روی `/app/data` وصل کنید. بررسی سلامت روی `/healthz` است.
+
 ## نحوه‌ی تعامل کاربر
 
 1. پروژه را از تب «پروژه‌ها» وارد کنید (یا در چت بنویسید «دیپلوی ./مسیر»).
