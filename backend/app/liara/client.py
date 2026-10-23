@@ -282,6 +282,14 @@ class LiaraClient:
         body = await self._get("/v1/billing")
         return Billing.model_validate(body.get("user", body))
 
+    async def account_balance(self, me: Me | None = None) -> float:
+        """Wallet balance that applies to this token: the team wallet in team mode,
+        otherwise the personal billing balance."""
+        me = me or await self.me()
+        if me.team_balance is not None:
+            return me.team_balance
+        return (await self.billing()).balance
+
     # ------------------------------------------------------------ projects
 
     async def list_projects(self) -> list[ProjectSummary]:

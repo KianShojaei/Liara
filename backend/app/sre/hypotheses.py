@@ -69,6 +69,14 @@ RULES: list[dict[str, Any]] = [
         "counter": "اگر CPU با وجود ترافیک کم بالا باشد، احتمالاً یک حلقه‌ی بی‌نهایت یا کار سنگین در کد است، نه کمبود منابع.",
     },
     {
+        "id": "health_path_protected",
+        "needs": {"http_protected"},
+        "boost": set(),
+        "cause": "برنامه سالم است؛ فقط مسیر بررسی سلامت پشت ورود (401/403) است و پایش را گمراه می‌کند",
+        "remedies": ["health_path"],
+        "counter": "اگر مسیر عمومی مثل /health هم 401 بدهد، تنظیمات احراز هویت برنامه بیش از حد سخت‌گیرانه است.",
+    },
+    {
         "id": "memory_limit",
         "needs": {"memory_saturation"},
         "boost": {"oom_kill", "oom_in_logs", "restart_loop"},
@@ -97,7 +105,7 @@ RULES: list[dict[str, Any]] = [
         "needs": {"http_failing"},
         "boost": set(),
         "cause": "برنامه از بیرون در دسترس نیست ولی لاگ و متریک عادی است (شبکه، دامنه یا خاموش بودن برنامه)",
-        "remedies": ["restart", "check_domain"],
+        "remedies": ["turn_on", "restart", "check_domain", "rollback"],
         "counter": "اگر لاگ‌ها درخواست‌های ورودی را نشان می‌دهند، مشکل شبکه نیست.",
     },
 ]

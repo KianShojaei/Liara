@@ -105,15 +105,14 @@ def status() -> None:
     async def run() -> None:
         rt, _ = _boot()
         try:
-            me, billing, apps = await asyncio.gather(
-                rt.client.me(), rt.client.billing(), rt.client.list_projects()
-            )
+            me, apps = await asyncio.gather(rt.client.me(), rt.client.list_projects())
+            balance = await rt.client.account_balance(me)
             _print(
                 {
                     "mode": rt.settings.copilot_mode,
                     "user": me.user.email or me.user.fullname,
                     "team": bool(me.team),
-                    "balance": billing.balance,
+                    "balance": balance,
                     "apps": [a.model_dump(by_alias=False) for a in apps],
                 }
             )

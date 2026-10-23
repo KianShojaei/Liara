@@ -239,13 +239,13 @@ async def manual_step_done(body: ManualStepDone, request: Request) -> dict[str, 
             if _agent(request).wizard.state(body.session_id)
             else None
         )
-        billing = await rt.client.billing()
+        balance = await rt.client.account_balance()
         rt.emit(
             body.session_id,
             "message",
-            {"role": "assistant", "text": f"موجودی فعلی: {billing.balance:,.0f} تومان."},
+            {"role": "assistant", "text": f"موجودی فعلی: {balance:,.0f} تومان."},
         )
-        return {"stage": state.stage if state else "n/a", "balance": billing.balance}
+        return {"stage": state.stage if state else "n/a", "balance": balance}
     tool = limitation.get("verify_tool")
     if tool and body.context:
         result = await rt.proposals.run_auto(body.session_id, tool, body.context)
@@ -269,9 +269,8 @@ async def manual_step_done(body: ManualStepDone, request: Request) -> dict[str, 
 async def status(request: Request) -> dict[str, Any]:
     rt = _rt(request)
     try:
-        apps, billing, me = await asyncio.gather(
-            rt.client.list_projects(), rt.client.billing(), rt.client.me()
-        )
+        apps, me = await asyncio.gather(rt.client.list_projects(), rt.client.me())
+        balance = await rt.client.account_balance(me)
     except LiaraError as exc:
         return {
             "ok": False,
@@ -292,12 +291,12 @@ async def status(request: Request) -> dict[str, Any]:
     allow = rt.settings.app_allowlist
     prices = {p.plan_id: p.price for p in me.project_plans()}
     burn = sum(prices.get(a.plan_id, 0.0) for a in apps if a.scale)
-    hours, label = runway(billing.balance, burn) if burn else (None, "—")
+    hours, label = runway(balance, burn) if burn else (None, "—")
     return {
         "ok": True,
         "mode": rt.settings.copilot_mode,
         "llm": rt.llm.available,
-        "balance": billing.balance,
+        "balance": balance,
         "hourly_burn": burn,
         "runway_hours": hours,
         "runway_label": label,

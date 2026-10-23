@@ -333,13 +333,27 @@ def analyze_latency(bundle: RawBundle) -> list[Finding]:
                     "http_failing",
                     "critical",
                     0.95,
-                    f"فقط {rate:.0%} از درخواست‌های مستقیم موفق بود",
+                    f"فقط {rate:.0%} از درخواست‌های مستقیم پاسخ گرفت",
                     {
                         "success_rate": rate,
+                        "statuses": probe.get("statuses"),
                         "samples": [
                             {k: s.get(k) for k in ("status", "latency_ms", "error")}
                             for s in probe.get("samples", [])
                         ],
+                    },
+                )
+            )
+        elif probe.get("protected"):
+            findings.append(
+                Finding(
+                    "http_protected",
+                    "info",
+                    0.9,
+                    "برنامه پاسخ می‌دهد ولی مسیر بررسی سلامت نیاز به ورود دارد (HTTP 401/403)",
+                    {
+                        "statuses": probe.get("statuses"),
+                        "hint": "مسیر سلامت را روی یک مسیر عمومی مثل /health تنظیم کنید",
                     },
                 )
             )

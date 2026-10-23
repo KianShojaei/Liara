@@ -35,7 +35,7 @@ def register_tools(rt: Runtime) -> None:  # noqa: C901 - one registration table 
 
     async def get_billing(args: dict[str, Any]) -> dict[str, Any]:
         billing = await client.billing()
-        return {"balance": billing.balance, "account_type": billing.account_type}
+        return {"balance": await client.account_balance(), "account_type": billing.account_type}
 
     async def list_apps(args: dict[str, Any]) -> dict[str, Any]:
         return {"apps": [p.model_dump(by_alias=False) for p in await client.list_projects()]}
@@ -106,7 +106,8 @@ def register_tools(rt: Runtime) -> None:  # noqa: C901 - one registration table 
         return (await asyncio.to_thread(ProjectAnalyzer(args["path"]).analyze)).to_dict()
 
     async def recommend_plan(args: dict[str, Any]) -> dict[str, Any]:
-        me, billing = await asyncio.gather(client.me(), client.billing())
+        me = await client.me()
+        balance = await client.account_balance(me)
         analysis = (
             await asyncio.to_thread(ProjectAnalyzer(args["path"]).analyze)
             if args.get("path")
@@ -115,7 +116,7 @@ def register_tools(rt: Runtime) -> None:  # noqa: C901 - one registration table 
         from app.deploy.analyzer import ProjectAnalysis
 
         analysis = analysis or ProjectAnalysis(path="", platform=args.get("platform", "node"))
-        return PlanAdvisor(me.project_plans(), billing.balance).advise(analysis).to_dict()
+        return PlanAdvisor(me.project_plans(), balance).advise(analysis).to_dict()
 
     async def get_limitations(args: dict[str, Any]) -> dict[str, Any]:
         return {"limitations": rt.knowledge.limitations() if rt.knowledge else []}

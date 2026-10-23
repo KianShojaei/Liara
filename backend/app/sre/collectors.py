@@ -58,7 +58,8 @@ class Collector:
         names = ("project", "me", "logs", "events", "cpu", "memory", "releases", "applets", "probe")
         for name, value in zip(names, results, strict=True):
             if isinstance(value, Exception):
-                bundle.errors.append(f"{name}: {getattr(value, 'user_message', str(value))}")
+                detail = getattr(value, "message", None) or str(value)
+                bundle.errors.append(f"{name}: {detail[:300]}")
                 continue
             if name == "project":
                 bundle.project = value

@@ -134,6 +134,34 @@ def plan_remediation(
                     requires="coding agent",
                 )
             )
+        elif remedy == "turn_on" and (evidence.get("project") or {}).get("scale") == 0:
+            options.append(
+                RemediationOption(
+                    "turn_on",
+                    "روشن کردن برنامه",
+                    "scale_app",
+                    {"app": app, "scale": 1},
+                    "low",
+                    current_hourly,
+                    "reversible",
+                    "none",
+                    "برنامه خاموش است (scale=0)؛ با روشن شدن، هزینه‌ی ساعتی دوباره شروع می‌شود.",
+                )
+            )
+        elif remedy == "health_path":
+            options.append(
+                RemediationOption(
+                    "health_path",
+                    "تنظیم مسیر بررسی سلامت روی /health و پایش دوباره",
+                    "set_watch",
+                    {"app": app, "enabled": True, "health_path": "/health"},
+                    "low",
+                    0.0,
+                    "reversible",
+                    "none",
+                    "هیچ تغییری روی برنامه نمی‌دهد؛ فقط پایش را روی یک مسیر عمومی می‌برد تا هشدار اشتباه ندهد.",
+                )
+            )
         elif remedy == "check_domain":
             options.append(
                 RemediationOption(

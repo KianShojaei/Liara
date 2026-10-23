@@ -12,11 +12,20 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class _Loose(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _drop_nulls(cls, data: Any) -> Any:
+        """The real API returns null for many optional fields (e.g. release.finishedAt);
+        dropping them lets the field defaults apply instead of failing validation."""
+        if isinstance(data, dict):
+            return {k: v for k, v in data.items() if v is not None}
+        return data
 
 
 # ---- /v1/me (VERIFIED: spec/me.yaml + cli src/commands/app/create.ts) ----
@@ -57,6 +66,16 @@ class Me(_Loose):
     team: dict[str, Any] | None = None
     plans: dict[str, Any] = Field(default_factory=dict)
     feature_flags: list[dict[str, Any]] = Field(default_factory=list, alias="featureFlags")
+
+    @property
+    def team_balance(self) -> float | None:
+        """Team accounts keep the wallet on the team object (VERIFIED spec/me.yaml Team.balance)."""
+        if isinstance(self.team, dict) and self.team.get("balance") is not None:
+            try:
+                return float(self.team["balance"])
+            except (TypeError, ValueError):
+                return None
+        return None
 
     def bundle_plan_for(self, plan_id: str) -> str | None:
         """Cheapest available feature-bundle plan for a compute plan

@@ -57,7 +57,11 @@ class PolicyEngine:
             return Decision(
                 "blocked",
                 spec.tier,
-                [f"app '{args.get(spec.app_arg or '')}' is outside COPILOT_APP_ALLOWLIST"],
+                [
+                    f"برنامه‌ی «{args.get(spec.app_arg or '')}» در فهرست مجاز نیست. برنامه‌های مجاز: "
+                    + ", ".join(sorted(self.config.app_allowlist))
+                    + " (COPILOT_APP_ALLOWLIST در .env)"
+                ],
             )
 
         if spec.tier == Tier.T3 and not self.config.enable_guarded:

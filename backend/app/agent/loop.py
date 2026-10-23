@@ -90,6 +90,18 @@ class Agent:
         route = self._keyword_route(text)
         if route.intent == "other" and rt.llm.available:
             route = await self._llm_route(text)
+        known = await self._known_apps()
+        if route.app and known and route.app not in known and route.intent != "deploy":
+            # The router (or the LLM) guessed a name that does not exist in this account.
+            rt.emit(
+                session_id,
+                "notice",
+                {
+                    "title": "نام برنامه",
+                    "detail": f"برنامه‌ای به نام «{route.app}» در حساب نیست؛ از برنامه‌ی انتخاب‌شده استفاده می‌کنم.",
+                },
+            )
+            route.app = route.explicit_app = ""
         route.app = (
             route.app or context.get("app") or session.get("app_name") or await self._default_app()
         )
@@ -142,13 +154,15 @@ class Agent:
         except Exception:  # noqa: BLE001
             return RouteResult()
 
-    async def _default_app(self) -> str:
+    async def _known_apps(self) -> list[str]:
         try:
-            apps = await self._rt.client.list_projects()
+            return [a.name for a in await self._rt.client.list_projects()]
         except LiaraError:
-            return ""
+            return []
+
+    async def _default_app(self) -> str:
         allow = self._rt.settings.app_allowlist
-        candidates = [a.name for a in apps if not allow or a.name in allow]
+        candidates = [name for name in await self._known_apps() if not allow or name in allow]
         return candidates[0] if len(candidates) == 1 else ""
 
     # --------------------------------------------------------- dispatch

@@ -84,13 +84,14 @@ class DeployWizard:
 
         state.stage = "advising"
         try:
-            me, billing = await asyncio.gather(rt.client.me(), rt.client.billing())
+            me = await rt.client.me()
+            balance = await rt.client.account_balance(me)
         except LiaraError as exc:
             state.stage = "failed"
             rt.emit(session_id, "error", {"text": exc.user_message})
             return state
         state.app_exists = await self._app_exists(state.app_name)
-        advice = PlanAdvisor(me.project_plans(), billing.balance).advise(analysis)
+        advice = PlanAdvisor(me.project_plans(), balance).advise(analysis)
         state.advice = advice
         state.plan_id = plan_id or advice.recommended_plan_id
         rt.emit(
@@ -120,10 +121,10 @@ class DeployWizard:
         """Called when the human presses 'Done' on a manual-step card."""
         state = self._require(session_id)
         if state.stage == "balance_check":
-            billing = await self._rt.client.billing()
             assert state.analysis and state.advice
             me = await self._rt.client.me()
-            state.advice = PlanAdvisor(me.project_plans(), billing.balance).advise(state.analysis)
+            balance = await self._rt.client.account_balance(me)
+            state.advice = PlanAdvisor(me.project_plans(), balance).advise(state.analysis)
             self._rt.emit(
                 session_id,
                 "plan_options",

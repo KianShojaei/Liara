@@ -37,11 +37,16 @@ class HttpProbe:
             async with httpx.AsyncClient(timeout=PROBE_TIMEOUT, follow_redirects=True) as http:
                 response = await http.get(url)
             latency = (time.perf_counter() - started) * 1000
+            status = response.status_code
             return {
                 "url": url,
-                "status": response.status_code,
+                "status": status,
                 "latency_ms": round(latency, 1),
-                "ok": 200 <= response.status_code < 400,
+                # ok = the app answered (any status < 500). 401/403/404 mean "up but protected
+                # or wrong path", which is not an outage; healthy = 2xx/3xx on this path.
+                "ok": status < 500,
+                "healthy": 200 <= status < 400,
+                "protected": status in (401, 403),
             }
         except httpx.HTTPError as exc:
             return {
@@ -61,11 +66,16 @@ class HttpProbe:
             if i < count - 1:
                 await asyncio.sleep(interval)
         okay = [s for s in samples if s["ok"]]
+        healthy = [s for s in samples if s.get("healthy")]
         latencies = [s["latency_ms"] for s in samples if s["latency_ms"] is not None]
+        statuses = sorted({s["status"] for s in samples if s["status"] is not None})
         return {
             "url": url,
             "samples": samples,
             "success_rate": len(okay) / max(len(samples), 1),
+            "healthy_rate": len(healthy) / max(len(samples), 1),
+            "protected": any(s.get("protected") for s in samples),
+            "statuses": statuses,
             "p50_ms": sorted(latencies)[len(latencies) // 2] if latencies else None,
             "max_ms": max(latencies) if latencies else None,
         }
@@ -122,12 +132,12 @@ class DeployVerifier:
     async def check_http(self, app: str, health_path: str, *, count: int = 3) -> dict[str, Any]:
         url = self._probe.url_for(app, health_path)
         series = await self._probe.probe_series(url, count=count, interval=1.0)
-        return step(
-            "http",
-            series["success_rate"] >= 0.67,
-            f"{int(series['success_rate'] * 100)}% OK, p50 {series['p50_ms']} ms",
-            **series,
-        )
+        detail = f"{int(series['success_rate'] * 100)}% answered, p50 {series['p50_ms']} ms"
+        if series.get("protected"):
+            detail += " (HTTP 401/403: app is up but this path needs login)"
+        elif series.get("statuses") and not series["healthy_rate"]:
+            detail += f" (HTTP {'/'.join(map(str, series['statuses']))} on this path)"
+        return step("http", series["success_rate"] >= 0.67, detail, **series)
 
     async def check_error_burst(self, app: str, *, window_seconds: int = 120) -> dict[str, Any]:
         try:

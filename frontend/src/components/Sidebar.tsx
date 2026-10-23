@@ -38,6 +38,7 @@ export function StatusPanel({ status, samples, selected, onSelect, sessionId, op
   const nowCpu = lastLive?.cpu ?? overview?.now?.cpu ?? null
   const nowMem = lastLive?.memory ?? overview?.now?.memory ?? null
   const httpOk = lastLive?.http_ok ?? overview?.probe?.ok ?? null
+  const protectedPath = overview?.probe?.protected === true
   const latency = lastLive?.latency_ms ?? overview?.probe?.latency_ms ?? null
 
   const toggleWatch = async () => {
@@ -137,7 +138,7 @@ export function StatusPanel({ status, samples, selected, onSelect, sessionId, op
             <>
               <div className="mb-1 flex items-center justify-between gap-2">
                 <span dir="ltr" className="mono text-sm font-semibold">{selected}</span>
-                <Chip tone={httpOk === false ? 'danger' : 'success'}>{httpOk === false ? 'پاسخ نمی‌دهد' : 'در دسترس'}</Chip>
+                <Chip tone={httpOk === false ? 'danger' : protectedPath ? 'warning' : 'success'} title={protectedPath ? 'برنامه بالاست ولی این مسیر نیاز به ورود دارد (401/403)' : undefined}>{httpOk === false ? 'پاسخ نمی‌دهد' : protectedPath ? 'بالا · نیاز به ورود' : 'در دسترس'}</Chip>
               </div>
               <a href={overview.url} target="_blank" rel="noreferrer" dir="ltr" className="mono block truncate text-xs text-emerald-500 hover:underline">
                 {overview.url}
